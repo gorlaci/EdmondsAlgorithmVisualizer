@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=EdmondsAlgorithmVisualizer
+PRODUCT_BUNDLE_IDENTIFIER=hu.gorlaci.uni.edmonds_algorithm_visualizer.EdmondsAlgorithmVisualizer$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
