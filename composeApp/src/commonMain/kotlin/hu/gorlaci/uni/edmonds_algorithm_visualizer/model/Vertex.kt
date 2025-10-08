@@ -1,11 +1,16 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.model
 
-class Vertex(
+open class Vertex(
     val id: String,
-    val edges: MutableList<Edge> = mutableListOf(),
+    //val edges: MutableList<Edge> = mutableListOf(),
     var type: VertexType = VertexType.NONE,
     var pair: Vertex? = null,
-)
+    var parent: Vertex? = null,
+){
+    override fun toString(): String {
+        return "Vertex($id)"
+    }
+}
 
 enum class VertexType {
     ROOT,

@@ -7,4 +7,5 @@ class GraphicalEdge(
     val endGraphicalVertex: GraphicalVertex,
     val selected: Boolean = false,
     val highlight: Color = Color.Transparent,
+    val color: Color = Color.Black
 )

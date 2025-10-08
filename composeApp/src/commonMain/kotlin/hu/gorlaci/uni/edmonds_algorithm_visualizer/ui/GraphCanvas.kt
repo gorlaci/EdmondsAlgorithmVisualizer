@@ -39,7 +39,7 @@ fun GraphCanvas(
             )
 
             drawLine(
-                color = Color.Black,
+                color = edge.color,
                 start = edge.startGraphicalVertex.transformCoordinates(centerX, centerY),
                 end = edge.endGraphicalVertex.transformCoordinates(centerX, centerY),
                 strokeWidth = if( edge.selected ) 10f else 3f

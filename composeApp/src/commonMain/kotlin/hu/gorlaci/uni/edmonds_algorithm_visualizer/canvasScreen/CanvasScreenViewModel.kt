@@ -20,15 +20,15 @@ class CanvasScreenViewModel : ViewModel() {
             Vertex( id = "I" ),
         ),
         idCoordinatesMap = mutableMapOf(
-            "A" to Pair( -100.0, 200.0 ),
-            "B" to Pair( 0.0, 200.0 ),
-            "C" to Pair( 100.0, 200.0 ),
-            "D" to Pair( -200.0, 0.0 ),
-            "E" to Pair( 0.0, 0.0 ),
-            "F" to Pair( 200.0, 0.0 ),
-            "G" to Pair( -100.0, -200.0 ),
-            "H" to Pair( 0.0, -200.0 ),
-            "I" to Pair( 100.0, -200.0 ),
+            'A' to Pair( -100.0, 200.0 ),
+            'B' to Pair( 0.0, 200.0 ),
+            'C' to Pair( 100.0, 200.0 ),
+            'D' to Pair( -200.0, 0.0 ),
+            'E' to Pair( 0.0, 0.0 ),
+            'F' to Pair( 200.0, 0.0 ),
+            'G' to Pair( -100.0, -200.0 ),
+            'H' to Pair( 0.0, -200.0 ),
+            'I' to Pair( 100.0, -200.0 ),
         )
     )
 
@@ -56,12 +56,10 @@ class CanvasScreenViewModel : ViewModel() {
     private var step = 0
 
     fun onNext(){
-        if( step == graphicalGraphList.size - 1 ){
-            graph.nextStep()
-            graphicalGraphList.add( graph.toGraphicalGraph() )
+        if( step < graphicalGraphList.size - 1 ) {
+            step++
+            graphicalGraph.value = graphicalGraphList[ step ]
         }
-        step++
-        graphicalGraph.value = graphicalGraphList[ step ]
     }
 
     fun onBack(){
@@ -69,6 +67,13 @@ class CanvasScreenViewModel : ViewModel() {
             step--
             graphicalGraph.value = graphicalGraphList[ step ]
         }
+    }
+
+    fun onRun(){
+        graphicalGraphList.clear()
+        graph.runEdmondsAlgorithm()
+        graphicalGraphList.addAll( graph.steps )
+        step = 0
     }
 
 }

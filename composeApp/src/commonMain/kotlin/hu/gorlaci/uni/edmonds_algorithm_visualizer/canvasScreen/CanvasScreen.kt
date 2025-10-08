@@ -47,6 +47,11 @@ fun CanvasScreen(){
             ) {
                 Text("Back")
             }
+            Button(
+                onClick = { viewModel.onRun() },
+            ) {
+                Text("Run")
+            }
         }
     }
 
