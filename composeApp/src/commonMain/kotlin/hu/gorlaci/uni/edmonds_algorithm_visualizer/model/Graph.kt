@@ -1,6 +1,8 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.model
 
 import androidx.compose.ui.graphics.Color
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.DARK_GREEN
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.YELLOW
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalEdge
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalGraph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalVertex
@@ -13,8 +15,8 @@ class Graph(
 ){
     val steps = mutableListOf<GraphicalGraph>()
 
-    private fun saveStep() {
-        steps.add( toGraphicalGraph() )
+    private fun saveStep( description: String = "" ) {
+        steps.add( toGraphicalGraph( description ) )
     }
 
     fun addEdge( fromId: String, toId: String ) {
@@ -22,16 +24,16 @@ class Graph(
         val toVertex = vertices.find { it.id == toId }
         if( fromVertex != null && toVertex != null ){
             val newEdge = Edge(  fromVertex, toVertex )
-            //fromVertex.edges.add( newEdge )
-            //toVertex.edges.add( newEdge )
             edges.add( newEdge )
         }
     }
 
     private var edgesLeft = true
+    private var activeEdge: Edge? = null
 
     fun runEdmondsAlgorithm() {
         saveStep()
+        saveStep( "Kiindulunk az üres párosításból" )
         while (edgesLeft) {
             buildForest()
             saveStep()
@@ -61,70 +63,76 @@ class Graph(
         for( vertex in vertices ) {
             vertex.type = if( vertex.pair == null ) VertexType.ROOT else VertexType.CLEARING
         }
+        saveStep( "Megépítjük a 0 élű alternáló erdőt" )
 
         var edge = edges.find { !it.visited }
         while ( edge != null) {
             edge.visited = true
-            saveStep()
+            activeEdge = edge
+            saveStep( "Vizsgáljuk a ${edge.fromVertex.id}-${edge.toVertex.id} élt" )
             if( edge.fromVertex.type.isOuter() && edge.toVertex.type.isOuter() ){
+                saveStep( "Külső-külső" )
                 val commonRoot = findCommonRoot( edge.fromVertex, edge.toVertex )
                 if( commonRoot != null ){
+                    saveStep(  "Kelyhet találtunk.\nHúzzuk össze a kelyhet!" )
                     makeBlossom( edge.fromVertex, edge.toVertex, commonRoot )
                     edge = edges.find { !it.visited }
+                    activeEdge = null
                     continue
                 } else {
+                    saveStep( "Javítóutat találtunk.\nJavítsunk az út mentén!" )
                     augmentAlongAlternatingPath( edge.fromVertex, edge.toVertex )
+                    activeEdge = null
                     return
                 }
             }
             if( edge.fromVertex.type.isOuter() && edge.toVertex.type == VertexType.CLEARING ){
-                edge.toVertex.type = VertexType.INNER
-                edge.toVertex.parent = edge.fromVertex
-                edge.toVertex.pair?.let {
-                    it.type = VertexType.OUTER
-                    it.parent = edge.toVertex
-                }
+                extendForest( edge.fromVertex, edge.toVertex )
                 edge = edges.find { !it.visited }
+                activeEdge = null
                 continue
             }
             if( edge.fromVertex.type == VertexType.CLEARING && edge.toVertex.type.isOuter() ){
-                edge.fromVertex.type = VertexType.INNER
-                edge.fromVertex.parent = edge.toVertex
-                edge.fromVertex.pair?.let {
-                    it.type = VertexType.OUTER
-                    it.parent = edge.fromVertex
-                }
+                extendForest( edge.toVertex, edge.fromVertex )
                 edge = edges.find { !it.visited }
+                activeEdge = null
                 continue
             }
             edge = edges.find { !it.visited }
+            activeEdge = null
         }
         edgesLeft = false
     }
 
     private fun augmentAlongAlternatingPath( vertexA: Vertex, vertexB: Vertex ){
-        var currentVertex: Vertex? = vertexA
+        augmentAlongBranch( vertexA )
+        augmentAlongBranch( vertexB )
+
+        makePair( vertexA, vertexB )
+    }
+
+    private fun augmentAlongBranch( vertex: Vertex ){
+        var currentVertex = vertex.parent
         while( currentVertex != null && currentVertex.parent != null ){
             val parent = currentVertex.parent!!
             val grandParent = parent.parent
 
-            currentVertex.pair = parent
-            parent.pair = currentVertex
+            println("Making pair: ${currentVertex.id} - ${parent.id}" )
+            makePair( currentVertex, parent )
 
             currentVertex = grandParent
         }
-        currentVertex = vertexB
-        while( currentVertex != null && currentVertex.parent != null ){
-            val parent = currentVertex.parent!!
-            val grandParent = parent.parent
+    }
 
-            currentVertex.pair = parent
-            parent.pair = currentVertex
-
-            currentVertex = grandParent
-        }
+    private fun makePair( vertexA: Vertex, vertexB: Vertex ){
         vertexA.pair = vertexB
         vertexB.pair = vertexA
+        if( vertexA is BlossomVertex ){
+            deconstructBlossom( vertexA )
+        }
+        if( vertexB is BlossomVertex ) {
+            deconstructBlossom(vertexB)
+        }
     }
 
     private fun makeBlossom( vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex ) {
@@ -153,7 +161,6 @@ class Graph(
 
         val blossomVertex = BlossomVertex(
             id = blossomId,
-//            edges = blossomEdges.toMutableList(),
             type = commonRoot.type,
             pair = commonRoot.pair,
             parent = commonRoot.parent,
@@ -265,18 +272,28 @@ class Graph(
         return null
     }
 
+    private fun extendForest( outerVertex: Vertex, clearingVertex: Vertex ){
+        saveStep( "Külső-tisztás\nBővítsük az erdőt!" )
 
-    fun toGraphicalGraph(): GraphicalGraph {
+        clearingVertex.type = VertexType.INNER
+        clearingVertex.parent = outerVertex
+        clearingVertex.pair?.let {
+            it.type = VertexType.OUTER
+            it.parent = clearingVertex
+        }
+
+        saveStep()
+    }
+
+
+    fun toGraphicalGraph( description: String = "" ): GraphicalGraph {
 
         val graphicalVertices = mutableListOf<GraphicalVertex>()
 
         for( vertex in vertices ) {
-            var coordinatesSum = Pair(0.0, 0.0)
-            for( char in vertex.id  ){
-                val coord = idCoordinatesMap[char] ?: Pair(0.0, 0.0)
-                coordinatesSum = Pair( coordinatesSum.first + coord.first, coordinatesSum.second + coord.second )
-            }
-            val coordinates = Pair( coordinatesSum.first / vertex.id.length, coordinatesSum.second / vertex.id.length )
+
+            val coordinates = getVertexCoordinates(vertex)
+
             when( vertex.type ){
                 VertexType.ROOT -> {
                     graphicalVertices.add(
@@ -285,7 +302,7 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.DOUBLE_CIRCLE,
-                            highlight = Color.Green
+                            highlight = DARK_GREEN
                         )
                     )
                 }
@@ -296,7 +313,7 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.SQUARE,
-                            highlight = Color.Green
+                            highlight = DARK_GREEN
                         )
                     )
                 }
@@ -307,7 +324,7 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.CIRCLE,
-                            highlight = Color.Green
+                            highlight = DARK_GREEN
                         )
                     )
                 }
@@ -322,13 +339,6 @@ class Graph(
                 }
             }
         }
-
-        println( "Vertices: $vertices" )
-        println( "Edges: $edges" )
-
-        println( "Graphical vertices: " )
-        graphicalVertices.map { it.label }.forEach { print( "$it, " ) }
-        println()
 
         val graphicalEdges = mutableListOf<GraphicalEdge>()
 
@@ -346,12 +356,41 @@ class Graph(
                     startGraphicalVertex,
                     endGraphicalVertex,
                     selected = edge.fromVertex.pair == edge.toVertex,
-                    highlight = if( edge.visited ) Color.Red else Color.Transparent,
-                    color = if( edge.fromVertex.parent == edge.toVertex || edge.toVertex.parent == edge.fromVertex ) Color.Green else Color.Black
+                    highlight = edgeHighlightColor(edge),
+                    color = if( edge.fromVertex.parent == edge.toVertex || edge.toVertex.parent == edge.fromVertex ) DARK_GREEN else Color.Black
                 )
             )
         }
 
-        return GraphicalGraph(graphicalVertices, graphicalEdges)
+        return GraphicalGraph(graphicalVertices, graphicalEdges, description)
+    }
+
+    private fun edgeHighlightColor( edge: Edge ): Color {
+        if( edge == activeEdge ) {
+            return YELLOW
+        }
+        if (edge.visited){
+            return Color.LightGray
+        }
+        return Color.Transparent
+    }
+
+
+    private fun getVertexCoordinates( vertex: Vertex ): Pair<Double, Double> {
+        var coordinatesSum = Pair(0.0, 0.0)
+        for( char in vertex.id  ){
+            val coord = idCoordinatesMap[char] ?: Pair(0.0, 0.0)
+            coordinatesSum = Pair( coordinatesSum.first + coord.first, coordinatesSum.second + coord.second )
+        }
+        return Pair( coordinatesSum.first / vertex.id.length, coordinatesSum.second / vertex.id.length )
+    }
+
+    fun getVertexByCoordinates( x: Double, y: Double ): Vertex? {
+        return vertices.find { vertex ->
+            val coordinates = getVertexCoordinates(vertex)
+            val dx = coordinates.first - x
+            val dy = coordinates.second - y
+            return@find dx * dx + dy * dy <= 400.0
+        }
     }
 }

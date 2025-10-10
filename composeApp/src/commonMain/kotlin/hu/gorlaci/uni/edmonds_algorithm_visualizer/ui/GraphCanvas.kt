@@ -13,16 +13,17 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalEdge
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalVertex
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalGraph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.HighlightType
 
 @Composable
 fun GraphCanvas(
-    vertices: List<GraphicalVertex>,
-    graphicalEdges: List<GraphicalEdge>,
+    graphicalGraph: GraphicalGraph,
     modifier: Modifier = Modifier,
 ) {
+
+    val vertices = graphicalGraph.graphicalVertices
+    val edges = graphicalGraph.graphicalEdges
 
     val textMeasurer = rememberTextMeasurer()
 
@@ -30,7 +31,7 @@ fun GraphCanvas(
         val centerX = size.width / 2.0
         val centerY = size.height / 2.0
 
-        for (edge in graphicalEdges) {
+        for (edge in edges) {
             drawLine(
                 color = edge.highlight,
                 start = edge.startGraphicalVertex.transformCoordinates(centerX, centerY),
@@ -42,7 +43,7 @@ fun GraphCanvas(
                 color = edge.color,
                 start = edge.startGraphicalVertex.transformCoordinates(centerX, centerY),
                 end = edge.endGraphicalVertex.transformCoordinates(centerX, centerY),
-                strokeWidth = if( edge.selected ) 10f else 3f
+                strokeWidth = if( edge.selected ) 8f else 3f
             )
         }
 

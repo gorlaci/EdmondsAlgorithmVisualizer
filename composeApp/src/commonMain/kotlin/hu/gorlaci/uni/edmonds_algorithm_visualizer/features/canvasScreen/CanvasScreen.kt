@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.canvasScreen.CanvasScreenViewModel
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.canvasScreen.CanvasScreenViewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 
 
@@ -17,17 +17,13 @@ fun CanvasScreen(){
 
     val graph by viewModel.graphicalGraph
 
-    val vertices = graph.graphicalVertices
-    val edges = graph.graphicalEdges
-
 
     Row(
         modifier = Modifier.fillMaxSize()
     ) {
 
         GraphCanvas(
-            vertices = vertices,
-            graphicalEdges = edges,
+            graphicalGraph = graph,
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(0.8f)
@@ -37,6 +33,12 @@ fun CanvasScreen(){
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.Bottom
         ){
+            Text(
+                text = graph.description,
+                modifier = Modifier.fillMaxWidth( 0.9f )
+            )
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+
             Button(
                 onClick = { viewModel.onNext() },
             ) {
