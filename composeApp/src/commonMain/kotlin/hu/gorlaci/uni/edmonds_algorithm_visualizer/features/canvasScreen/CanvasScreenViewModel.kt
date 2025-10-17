@@ -2,9 +2,11 @@ package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.canvasScreen
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.InMemoryGraphStorage
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 
-class CanvasScreenViewModel : ViewModel() {
+class CanvasScreenViewModel(
+    private val graphStorage: GraphStorage
+) : ViewModel() {
 
 //    private val graph = Graph(
 //        vertices = mutableListOf(
@@ -48,11 +50,14 @@ class CanvasScreenViewModel : ViewModel() {
 //        graph.addEdge( "E", "G" )
 //    }
 
-    private val graph = InMemoryGraphStorage.graph
+    private val graph = graphStorage.getAllGraphs()[ 0 ]
 
     private val graphicalGraphList = mutableListOf( graph.toGraphicalGraph() )
 
     val graphicalGraph = mutableStateOf( graphicalGraphList[ 0 ] )
+
+    val nextEnabled = mutableStateOf(false)
+    val backEnabled = mutableStateOf(false)
 
     private var step = 0
 
@@ -61,6 +66,7 @@ class CanvasScreenViewModel : ViewModel() {
             step++
             graphicalGraph.value = graphicalGraphList[ step ]
         }
+        setButtons()
     }
 
     fun onBack(){
@@ -68,6 +74,7 @@ class CanvasScreenViewModel : ViewModel() {
             step--
             graphicalGraph.value = graphicalGraphList[ step ]
         }
+        setButtons()
     }
 
     fun onRun(){
@@ -75,6 +82,12 @@ class CanvasScreenViewModel : ViewModel() {
         graph.runEdmondsAlgorithm()
         graphicalGraphList.addAll( graph.steps )
         step = 0
+        setButtons()
+    }
+
+    fun setButtons(){
+        nextEnabled.value = step < graphicalGraphList.size - 1
+        backEnabled.value = step > 0
     }
 
 }

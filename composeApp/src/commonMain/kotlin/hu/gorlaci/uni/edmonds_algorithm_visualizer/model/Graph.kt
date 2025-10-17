@@ -1,7 +1,9 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.model
 
 import androidx.compose.ui.graphics.Color
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.BLUE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.DARK_GREEN
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.PINK
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.YELLOW
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalEdge
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalGraph
@@ -30,6 +32,9 @@ class Graph(
 
     private var edgesLeft = true
     private var activeEdge: Edge? = null
+    private val augmentingPathEdges = mutableSetOf<Edge>()
+    private val blossomEdges = mutableSetOf<Edge>()
+
 
     fun runEdmondsAlgorithm() {
         saveStep()
@@ -38,6 +43,8 @@ class Graph(
             buildForest()
             saveStep()
         }
+        reset()
+        saveStep("Bontsuk ki a kelyheket!")
         val verticesCopy = vertices.toList()
         verticesCopy.forEach { vertex ->
             if ( vertex is BlossomVertex ){
@@ -45,7 +52,7 @@ class Graph(
             }
         }
         reset()
-        saveStep()
+        saveStep( "A megtalált párosításunk maximális" )
     }
 
     private fun reset() {
@@ -74,14 +81,20 @@ class Graph(
                 saveStep( "Külső-külső" )
                 val commonRoot = findCommonRoot( edge.fromVertex, edge.toVertex )
                 if( commonRoot != null ){
+                    markBlossomEdges( edge.fromVertex, edge.toVertex, commonRoot )
                     saveStep(  "Kelyhet találtunk.\nHúzzuk össze a kelyhet!" )
+                    blossomEdges.clear()
                     makeBlossom( edge.fromVertex, edge.toVertex, commonRoot )
                     edge = edges.find { !it.visited }
                     activeEdge = null
                     continue
                 } else {
+                    markAugmentingPathEdges( edge.fromVertex, edge.toVertex )
                     saveStep( "Javítóutat találtunk.\nJavítsunk az út mentén!" )
+                    augmentingPathEdges.clear()
                     augmentAlongAlternatingPath( edge.fromVertex, edge.toVertex )
+                    reset()
+                    saveStep( "Bővítettük a párosítást" )
                     activeEdge = null
                     return
                 }
@@ -117,7 +130,6 @@ class Graph(
             val parent = currentVertex.parent!!
             val grandParent = parent.parent
 
-            println("Making pair: ${currentVertex.id} - ${parent.id}" )
             makePair( currentVertex, parent )
 
             currentVertex = grandParent
@@ -136,28 +148,10 @@ class Graph(
     }
 
     private fun makeBlossom( vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex ) {
-        println(  "Making blossom. vertexA: $vertexA, vertexB: $vertexB, commonRoot: $commonRoot" )
-        val blossomVertices = mutableListOf( commonRoot )
-        var currentVertex: Vertex = vertexA
-        val sideAVertices = mutableListOf<Vertex>()
-        while( currentVertex != commonRoot ){
-            sideAVertices.add( currentVertex )
-            currentVertex = currentVertex.parent!!
-        }
-        currentVertex = vertexB
-        val sideBVertices = mutableListOf<Vertex>()
-        while( currentVertex != commonRoot ){
-            sideBVertices.add( currentVertex )
-            currentVertex = currentVertex.parent!!
-        }
-
-        blossomVertices.addAll( sideAVertices )
-        blossomVertices.addAll( sideBVertices.reversed() )
-        println( "Blossom vertices: $blossomVertices" )
+        val blossomVertices = getBlossomVertices(vertexA, vertexB, commonRoot)
 
         val blossomId = blossomVertices.map{ it.id }.sorted().joinToString("")
         val blossomEdges = edges.filter { it.fromVertex in blossomVertices || it.toVertex in blossomVertices }
-        println( "Blossom edges: $blossomEdges" )
 
         val blossomVertex = BlossomVertex(
             id = blossomId,
@@ -182,12 +176,9 @@ class Graph(
             }
         }
         edges.removeAll( blossomEdges )
-        println("Remaining edges: $edges")
 
         vertices.removeAll( blossomVertices )
         vertices.add( blossomVertex )
-
-        println( "New Vertices: $vertices" )
 
         commonRoot.pair?.pair = blossomVertex
         for( vertex in vertices ){
@@ -195,8 +186,26 @@ class Graph(
                 vertex.parent = blossomVertex
             }
         }
+    }
 
-        println( "Making blossom end" )
+    private fun getBlossomVertices( vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex ) : MutableList<Vertex> {
+        val blossomVertices = mutableListOf( commonRoot )
+        var currentVertex: Vertex = vertexA
+        val sideAVertices = mutableListOf<Vertex>()
+        while( currentVertex != commonRoot ){
+            sideAVertices.add( currentVertex )
+            currentVertex = currentVertex.parent!!
+        }
+        currentVertex = vertexB
+        val sideBVertices = mutableListOf<Vertex>()
+        while( currentVertex != commonRoot ){
+            sideBVertices.add( currentVertex )
+            currentVertex = currentVertex.parent!!
+        }
+
+        blossomVertices.addAll( sideAVertices )
+        blossomVertices.addAll( sideBVertices.reversed() )
+        return blossomVertices
     }
 
     private fun deconstructBlossom(blossomVertex: BlossomVertex ){
@@ -247,6 +256,9 @@ class Graph(
             }
         }
 
+        reset()
+        saveStep()
+
         for( vertex in blossomVertex.previousStructure.vertices ){
             if( vertex is BlossomVertex ){
                 deconstructBlossom( vertex )
@@ -285,6 +297,38 @@ class Graph(
         saveStep()
     }
 
+    private fun markAugmentingPathEdges( vertexA: Vertex, vertexB: Vertex ) {
+        markBranchEdges( vertexA )
+        markBranchEdges( vertexB )
+        val edge = edges.find { (it.fromVertex == vertexA && it.toVertex == vertexB) || (it.fromVertex == vertexB && it.toVertex == vertexA) }
+        if( edge != null ) {
+            augmentingPathEdges.add(edge)
+        }
+    }
+
+    private fun markBranchEdges( vertex: Vertex ){
+        var currentVertex = vertex
+        while( currentVertex.parent != null ){
+            val parent = currentVertex.parent!!
+            val edge = edges.find { (it.fromVertex == currentVertex && it.toVertex == parent) || (it.fromVertex == parent && it.toVertex == currentVertex) }
+            if( edge != null ) {
+                augmentingPathEdges.add(edge)
+            }
+            currentVertex = parent
+        }
+    }
+
+    private fun markBlossomEdges( vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex ){
+        val blossomVertices = getBlossomVertices( vertexA, vertexB, commonRoot )
+        for( i in blossomVertices.indices ){
+            val vertex = blossomVertices[i]
+            val nextVertex = blossomVertices[ (i + 1) % blossomVertices.size ]
+            edges.filter { (it.fromVertex == vertex && it.toVertex == nextVertex) || (it.fromVertex == nextVertex && it.toVertex == vertex) }
+                .forEach { edge ->
+                    blossomEdges.add(edge)
+                }
+        }
+    }
 
     fun toGraphicalGraph( description: String = "" ): GraphicalGraph {
 
@@ -366,6 +410,12 @@ class Graph(
     }
 
     private fun edgeHighlightColor( edge: Edge ): Color {
+        if( edge in augmentingPathEdges ) {
+            return BLUE
+        }
+        if ( edge in blossomEdges ){
+            return PINK
+        }
         if( edge == activeEdge ) {
             return YELLOW
         }

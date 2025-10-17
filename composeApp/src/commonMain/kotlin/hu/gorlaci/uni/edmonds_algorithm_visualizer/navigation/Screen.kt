@@ -5,6 +5,7 @@ sealed class Screen(
 ){
     object CanvasScreen : Screen( "canvas_screen" )
     object GraphDrawingScreen : Screen( "graph_drawing_screen" )
+    object MainMenuScreen : Screen( "main_menu_screen" )
 }
 
 

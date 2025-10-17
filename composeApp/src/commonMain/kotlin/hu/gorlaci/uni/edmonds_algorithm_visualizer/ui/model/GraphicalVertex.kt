@@ -3,7 +3,7 @@ package hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 
-class GraphicalVertex(
+data class GraphicalVertex(
     val x: Double,
     val y: Double,
     val label: String,

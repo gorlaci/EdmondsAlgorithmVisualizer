@@ -6,16 +6,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.canvasScreen.CanvasScreenViewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 
 
 @Composable
-fun CanvasScreen(){
+fun CanvasScreen(
+    graphStorage: GraphStorage
+){
 
-    val viewModel = viewModel{ CanvasScreenViewModel() }
+    val viewModel = viewModel{ CanvasScreenViewModel( graphStorage ) }
 
     val graph by viewModel.graphicalGraph
+
+    val nextEnabled by viewModel.nextEnabled
+    val backEnabled by viewModel.backEnabled
 
 
     Row(
@@ -41,11 +47,13 @@ fun CanvasScreen(){
 
             Button(
                 onClick = { viewModel.onNext() },
+                enabled = nextEnabled
             ) {
                 Text("Next")
             }
             Button(
                 onClick = { viewModel.onBack() },
+                enabled = backEnabled
             ) {
                 Text("Back")
             }

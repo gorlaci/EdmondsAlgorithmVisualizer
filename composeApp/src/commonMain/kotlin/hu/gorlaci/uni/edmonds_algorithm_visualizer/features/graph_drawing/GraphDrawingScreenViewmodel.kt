@@ -2,13 +2,15 @@ package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.graph_drawing
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.InMemoryGraphStorage
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Graph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Vertex
 
-class GraphDrawingScreenViewmodel: ViewModel() {
+class GraphDrawingScreenViewmodel(
+    private val graphStorage: GraphStorage
+): ViewModel() {
 
-    private val graph = Graph()
+    private var graph = Graph()
 
     val graphicalGraph = mutableStateOf(graph.toGraphicalGraph())
 
@@ -21,17 +23,17 @@ class GraphDrawingScreenViewmodel: ViewModel() {
         graphicalGraph.value = graph.toGraphicalGraph()
     }
 
-    private var drawMode = DrawMode.VERTEX
+    val drawMode = mutableStateOf( DrawMode.VERTEX )
 
     fun changeDrawMode( mode: DrawMode ){
-        drawMode = mode
+        drawMode.value = mode
         firstVertexForEdge = null
     }
 
     private var firstVertexForEdge: Vertex? = null
 
     fun onLeftClick( x: Double, y: Double ){
-        when( drawMode ){
+        when( drawMode.value ){
             DrawMode.VERTEX -> {
                 addVertex( x, y )
             }
@@ -40,12 +42,13 @@ class GraphDrawingScreenViewmodel: ViewModel() {
                 if( clickedVertex != null ) {
                     if( firstVertexForEdge == null ){
                         firstVertexForEdge = clickedVertex
+                        graphicalGraph.value = graphicalGraph.value.addSelectedHighlight(clickedVertex)
                     } else {
                         if( firstVertexForEdge != clickedVertex ) {
                             graph.addEdge( firstVertexForEdge!!.id, clickedVertex.id )
-                            graphicalGraph.value = graph.toGraphicalGraph()
                         }
                         firstVertexForEdge = null
+                        graphicalGraph.value = graph.toGraphicalGraph()
                     }
                 }
             }
@@ -57,7 +60,10 @@ class GraphDrawingScreenViewmodel: ViewModel() {
     }
 
     fun saveGraph(){
-        InMemoryGraphStorage.graph = graph
+        graphStorage.addGraph( graph )
+        graph = Graph()
+        graphicalGraph.value = graph.toGraphicalGraph()
+        nextID = 'A'
     }
 
 }
