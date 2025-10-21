@@ -1,13 +1,13 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.navigation
 
-import CanvasScreen
+import AlgorithmRunningScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.graph_drawing.GraphDrawingScreen
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph.GraphDrawingScreen
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.mainMenu.MainMenuScreen
 
 @Composable
@@ -29,7 +29,7 @@ fun NavGraph(
         }
 
         composable(Screen.CanvasScreen.route ){
-            CanvasScreen(
+            AlgorithmRunningScreen(
                 graphStorage = graphStorage,
             )
         }

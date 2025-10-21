@@ -13,7 +13,8 @@ import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.HighlightType
 class Graph(
     val vertices: MutableList<Vertex> = mutableListOf(),
     val edges: MutableList<Edge> = mutableListOf(),
-    val idCoordinatesMap: MutableMap<Char, Pair<Double, Double>> = mutableMapOf()
+    val idCoordinatesMap: MutableMap<Char, Pair<Double, Double>> = mutableMapOf(),
+    var name: String = "",
 ){
     val steps = mutableListOf<GraphicalGraph>()
 
@@ -148,6 +149,7 @@ class Graph(
     }
 
     private fun makeBlossom( vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex ) {
+
         val blossomVertices = getBlossomVertices(vertexA, vertexB, commonRoot)
 
         val blossomId = blossomVertices.map{ it.id }.sorted().joinToString("")
@@ -210,6 +212,8 @@ class Graph(
 
     private fun deconstructBlossom(blossomVertex: BlossomVertex ){
 
+        saveStep("Bontsuk ki a ${blossomVertex.id} kelyhet!")
+
         val blossomVertices = blossomVertex.previousStructure.vertices
 
         vertices.remove( blossomVertex )
@@ -257,7 +261,6 @@ class Graph(
         }
 
         reset()
-        saveStep()
 
         for( vertex in blossomVertex.previousStructure.vertices ){
             if( vertex is BlossomVertex ){

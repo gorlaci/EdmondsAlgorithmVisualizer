@@ -1,4 +1,4 @@
-package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.graph_drawing
+package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -10,7 +10,9 @@ class GraphDrawingScreenViewmodel(
     private val graphStorage: GraphStorage
 ): ViewModel() {
 
-    private var graph = Graph()
+    private var graph = Graph(
+        name = "Custom Graph"
+    )
 
     val graphicalGraph = mutableStateOf(graph.toGraphicalGraph())
 
@@ -61,9 +63,18 @@ class GraphDrawingScreenViewmodel(
 
     fun saveGraph(){
         graphStorage.addGraph( graph )
-        graph = Graph()
+        graph = Graph(
+            name = "Custom Graph"
+        )
         graphicalGraph.value = graph.toGraphicalGraph()
         nextID = 'A'
+    }
+
+    val graphName = mutableStateOf( "Custom Graph" )
+
+    fun onNameChange( newName: String ){
+        graphName.value = newName
+        graph.name = newName
     }
 
 }

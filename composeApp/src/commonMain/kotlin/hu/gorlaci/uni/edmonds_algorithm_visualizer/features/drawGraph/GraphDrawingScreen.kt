@@ -1,9 +1,10 @@
-package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.graph_drawing
+package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -22,24 +23,35 @@ fun GraphDrawingScreen(
 
     val graph by viewModel.graphicalGraph
     val drawMode by viewModel.drawMode
+    val name by viewModel.graphName
 
     Row(
         modifier = Modifier.fillMaxSize()
     ){
-        GraphCanvas(
-            graphicalGraph = graph,
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.8f)
                 .fillMaxHeight()
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        val modelX = offset.x.toDouble() - size.width / 2.0
-                        val modelY = size.height / 2.0 - offset.y.toDouble()
+                .fillMaxWidth(0.8f)
+        ) {
+            TextField(
+                value = name,
+                onValueChange = { viewModel.onNameChange(  it ) },
+            )
 
-                        viewModel.onLeftClick( modelX, modelY )
+            GraphCanvas(
+                graphicalGraph = graph,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            val modelX = offset.x.toDouble() - size.width / 2.0
+                            val modelY = size.height / 2.0 - offset.y.toDouble()
+
+                            viewModel.onLeftClick(modelX, modelY)
+                        }
                     }
-                }
-        )
+            )
+        }
 
         Column {
             Button(
