@@ -4,9 +4,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 
 data class GraphicalVertex(
-    val x: Double,
-    val y: Double,
-    val label: String,
+    val x: Double = 0.0,
+    val y: Double = 0.0,
+    val label: String = "",
     val selected: Boolean = false,
     val highlight: Color = Color.Transparent,
     val highlightType: HighlightType = HighlightType.CIRCLE,
