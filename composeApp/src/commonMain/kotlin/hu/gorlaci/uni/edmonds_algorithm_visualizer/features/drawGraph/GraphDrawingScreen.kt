@@ -1,5 +1,6 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph
 
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -50,6 +51,25 @@ fun GraphDrawingScreen(
                             viewModel.onLeftClick(modelX, modelY)
                         }
                     }
+                    .pointerInput(Unit){
+                        detectDragGestures(
+                            onDragStart = { offset->
+                                val modelX = offset.x.toDouble() - size.width / 2.0
+                                val modelY = size.height / 2.0 - offset.y.toDouble()
+
+                                viewModel.onDragStart( modelX, modelY )
+                            },
+                            onDrag = { _, offset ->
+                                val modelX = offset.x.toDouble()
+                                val modelY = -offset.y.toDouble()
+
+                                viewModel.onDrag( modelX, modelY )
+                            },
+                            onDragEnd = {
+                                viewModel.onDragEnd()
+                            }
+                        )
+                    }
             )
         }
 
@@ -76,6 +96,7 @@ fun GraphDrawingScreen(
 
             Button(
                 onClick = {
+                    viewModel.saveGraph()
                     onFinish()
                 }
             ) {

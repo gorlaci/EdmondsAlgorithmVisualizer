@@ -37,7 +37,9 @@ class GraphDrawingScreenViewmodel(
     fun onLeftClick( x: Double, y: Double ){
         when( drawMode.value ){
             DrawMode.VERTEX -> {
-                addVertex( x, y )
+                if( graph.getVertexByCoordinates(x, y) == null ) {
+                    addVertex(x, y)
+                }
             }
             DrawMode.EDGE -> {
                 val clickedVertex = graph.getVertexByCoordinates( x, y )
@@ -57,17 +59,34 @@ class GraphDrawingScreenViewmodel(
         }
     }
 
-    fun onRightClick( x: Double, y: Double ){
+    var draggedVertex: Vertex? = null
+
+    fun onDragStart( x: Double, y: Double ) {
+        draggedVertex = graph.getVertexByCoordinates( x, y )
         firstVertexForEdge = null
     }
 
+    fun onDrag( deltaX: Double, deltaY: Double ) {
+        draggedVertex?.let { vertex ->
+            val originalCoordinates = graph.idCoordinatesMap[ vertex.id[0] ] ?: Pair(0.0, 0.0)
+            graph.idCoordinatesMap[ vertex.id[0] ] = Pair( originalCoordinates.first + deltaX, originalCoordinates.second + deltaY )
+            graphicalGraph.value = graph.toGraphicalGraph()
+        }
+    }
+
+    fun onDragEnd(){
+        draggedVertex = null
+    }
+
     fun saveGraph(){
-        graphStorage.addGraph( graph )
-        graph = Graph(
-            name = "Custom Graph"
-        )
-        graphicalGraph.value = graph.toGraphicalGraph()
-        nextID = 'A'
+        if( !graphStorage.getAllGraphs().contains( graph) ) {
+            graphStorage.addGraph(graph)
+            graph = Graph(
+                name = "Custom Graph"
+            )
+            graphicalGraph.value = graph.toGraphicalGraph()
+            nextID = 'A'
+        }
     }
 
     val graphName = mutableStateOf( "Custom Graph" )

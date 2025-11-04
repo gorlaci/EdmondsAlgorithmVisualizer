@@ -1,6 +1,7 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.navigation
 
 import AlgorithmRunningScreen
+import QuizScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,35 +14,44 @@ import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.mainMenu.MainMenuScr
 @Composable
 fun NavGraph(
     graphStorage: GraphStorage,
-    navHostController: NavHostController = rememberNavController()
-){
+    navHostController: NavHostController = rememberNavController(),
+) {
     NavHost(
         navController = navHostController,
         startDestination = Screen.MainMenuScreen.route,
-    ){
-        composable(Screen.GraphDrawingScreen.route ){
+    ) {
+        composable(Screen.GraphDrawingScreen.route) {
             GraphDrawingScreen(
                 graphStorage = graphStorage,
                 onFinish = {
-                    navHostController.navigate(Screen.CanvasScreen.route )
+                    navHostController.navigate(Screen.CanvasScreen.route)
                 },
             )
         }
 
-        composable(Screen.CanvasScreen.route ){
+        composable(Screen.CanvasScreen.route) {
             AlgorithmRunningScreen(
                 graphStorage = graphStorage,
             )
         }
 
-        composable(Screen.MainMenuScreen.route ) {
+        composable(Screen.MainMenuScreen.route) {
             MainMenuScreen(
                 onDrawGraphClick = {
-                    navHostController.navigate( Screen.GraphDrawingScreen.route )
+                    navHostController.navigate(Screen.GraphDrawingScreen.route)
                 },
                 onRunAlgorithmClick = {
-                    navHostController.navigate( Screen.CanvasScreen.route )
-                }
+                    navHostController.navigate(Screen.CanvasScreen.route)
+                },
+                onPlayQuizClick = {
+                    navHostController.navigate(Screen.QuizScreen.route)
+                },
+            )
+        }
+
+        composable(Screen.QuizScreen.route) {
+            QuizScreen(
+                graphStorage = graphStorage,
             )
         }
     }

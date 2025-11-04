@@ -12,7 +12,8 @@ import androidx.compose.ui.unit.dp
 fun MainMenuScreen(
     onDrawGraphClick: () -> Unit,
     onRunAlgorithmClick: () -> Unit,
-){
+    onPlayQuizClick: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -20,16 +21,24 @@ fun MainMenuScreen(
     ) {
         Button(
             onClick = onDrawGraphClick,
-        ){
-            Text( "Draw custom graph" )
+        ) {
+            Text("Draw custom graph")
         }
 
-        Spacer( modifier = Modifier.height(50.dp) )
+        Spacer(modifier = Modifier.height(50.dp))
 
         Button(
             onClick = onRunAlgorithmClick,
-        ){
-            Text( "Run Edmonds' algorithm" )
+        ) {
+            Text("Run Edmonds' algorithm")
+        }
+
+        Spacer(modifier = Modifier.height(50.dp))
+
+        Button(
+            onClick = onPlayQuizClick,
+        ) {
+            Text("Play Quiz")
         }
     }
 }
