@@ -5,9 +5,18 @@ open class Vertex(
     var type: VertexType = VertexType.NONE,
     var pair: Vertex? = null,
     var parent: Vertex? = null,
-){
+) {
     override fun toString(): String {
         return "Vertex($id)"
+    }
+
+    open fun copy(): Vertex {
+        return Vertex(
+            id = this.id,
+            type = this.type,
+            pair = this.pair,
+            parent = this.parent,
+        )
     }
 }
 

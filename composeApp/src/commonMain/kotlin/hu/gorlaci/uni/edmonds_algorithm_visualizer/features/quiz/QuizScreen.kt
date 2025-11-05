@@ -1,3 +1,4 @@
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -7,13 +8,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz.QuestionMode
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz.QuestionMode.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz.QuizScreenViewmodel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.EdgeType
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.PossibleQuestion
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.AnswerCard
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.Question
@@ -27,7 +28,7 @@ fun QuizScreen(
 
     val viewModel = viewModel { QuizScreenViewmodel(graphStorage) }
 
-    val selectedGraph by viewModel.selectedGraph
+    val selectedGraph by viewModel.currentGraph
 
     val graphicalGraph by viewModel.graphicalGraph
 
@@ -80,6 +81,14 @@ fun QuizScreen(
             GraphCanvas(
                 graphicalGraph = graphicalGraph,
                 modifier = Modifier.fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            val modelX = offset.x.toDouble() - size.width / 2.0
+                            val modelY = size.height / 2.0 - offset.y.toDouble()
+
+                            viewModel.onClick(modelX, modelY)
+                        }
+                    }
             )
         }
 
@@ -101,14 +110,14 @@ fun QuizScreen(
                 val questionMode by viewModel.questionMode
 
                 when (questionMode) {
-                    QuestionMode.NOTHING -> {
+                    NOTHING -> {
                         Text(
                             text = graphicalGraph.possibleQuestion.description,
                             modifier = Modifier.fillMaxWidth(0.9f)
                         )
                     }
 
-                    QuestionMode.SHOW_ANSWER -> {
+                    SHOW_ANSWER -> {
                         val lastAnswer by viewModel.lastAnswer
                         AnswerCard(
                             answer = lastAnswer,
@@ -116,22 +125,41 @@ fun QuizScreen(
                         )
                     }
 
-                    QuestionMode.EDGE_TYPE -> {
-                        val actualQuestion = graphicalGraph.possibleQuestion
+                    EDGE_TYPE -> {
+                        Question(
+                            question = "Milyen típusú él ez?",
+                            answers = EdgeType.entries,
+                            toString = { it.toHungarian() },
+                            onAnswer = { viewModel.onEdgeTypeAnswer(it) },
+                        )
+                    }
 
-                        when (actualQuestion) {
-                            is PossibleQuestion.DeconstructBlossom -> TODO()
-                            is PossibleQuestion.MarkAugmentingPath -> TODO()
-                            is PossibleQuestion.MarkBlossom -> TODO()
-                            is PossibleQuestion.Nothing -> {}
-                            is PossibleQuestion.SelectedEdge -> {
+                    MARK_AUGMENTING_PATH -> {
+                        Column {
+                            Text(
+                                text = "Jelöld ki a javító utat!",
+                                modifier = Modifier.fillMaxWidth(0.9f)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Button(
+                                onClick = { viewModel.onAugmentingPathSubmitted() },
+                            ) {
+                                Text("Kész!")
+                            }
+                        }
+                    }
 
-                                Question(
-                                    question = "Milyen típusú él ez?",
-                                    answers = EdgeType.entries,
-                                    toString = { it.toHungarian() },
-                                    onAnswer = { viewModel.onEdgeTypeAnswer(it) },
-                                )
+                    MARK_BLOSSOM -> {
+                        Column {
+                            Text(
+                                text = "Jelöld ki a kelyhet!",
+                                modifier = Modifier.fillMaxWidth(0.9f)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Button(
+                                onClick = { viewModel.onBlossomSubmitted() },
+                            ) {
+                                Text("Kész!")
                             }
                         }
                     }
@@ -145,10 +173,22 @@ fun QuizScreen(
                 ) {
                     Text("Next")
                 }
-                Button(
-                    onClick = { viewModel.onRun() },
-                ) {
-                    Text(if (quizStarted) "Restart" else "Run")
+                Row {
+//                    Text(text = "Question Frequency:")
+//
+//                    val questionFrequency by viewModel.questionFrequency
+//
+//                    Slider(
+//                        value = questionFrequency,
+//                        onValueChange = { viewModel.onQuestionFrequencyChange(it) },
+//                    )
+
+                    Button(
+                        onClick = { viewModel.onRun() },
+//                        modifier = Modifier.padding(start = 10.dp)
+                    ) {
+                        Text(if (quizStarted) "Restart" else "Run")
+                    }
                 }
             }
         }

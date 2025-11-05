@@ -16,11 +16,59 @@ class Graph(
     val edges: MutableList<Edge> = mutableListOf(),
     val idCoordinatesMap: MutableMap<Char, Pair<Double, Double>> = mutableMapOf(),
     var name: String = "",
+    private var activeEdge: Edge? = null,
+    private val augmentingPathEdges: MutableSet<Edge> = mutableSetOf(),
+    private val blossomEdges: MutableSet<Edge> = mutableSetOf(),
 ) {
-    val steps = mutableListOf<GraphicalGraph>()
+
+    fun copy(): Graph {
+        val vertexMap = mutableMapOf<Vertex, Vertex>()
+        val newVertices = vertices.map { vertex ->
+            val newVertex = vertex.copy()
+            vertexMap[vertex] = newVertex
+            newVertex
+        }.toMutableList()
+
+        vertices.forEach { vertex ->
+            val newVertex = vertexMap[vertex]!!
+            newVertex.pair = vertex.pair?.let { vertexMap[it] }
+            newVertex.parent = vertex.parent?.let { vertexMap[it] }
+        }
+
+        var newActiveEdge: Edge? = null
+        val newAugmentingPathEdges = mutableSetOf<Edge>()
+        val newBlossomEdges = mutableSetOf<Edge>()
+
+        val newEdges = edges.map { edge ->
+            val newFromVertex = vertexMap[edge.fromVertex]!!
+            val newToVertex = vertexMap[edge.toVertex]!!
+            val newEdge = Edge(newFromVertex, newToVertex).also { it.visited = edge.visited }
+            if (edge == activeEdge) {
+                newActiveEdge = newEdge
+            }
+            if (augmentingPathEdges.contains(edge)) {
+                newAugmentingPathEdges.add(newEdge)
+            }
+            if (blossomEdges.contains(edge)) {
+                newBlossomEdges.add(newEdge)
+            }
+            newEdge
+        }.toMutableList()
+        return Graph(
+            vertices = newVertices,
+            edges = newEdges,
+            idCoordinatesMap = idCoordinatesMap,
+            name = name,
+            activeEdge = newActiveEdge,
+            augmentingPathEdges = newAugmentingPathEdges,
+            blossomEdges = newBlossomEdges,
+        )
+    }
+
+    val steps = mutableListOf<Pair<Graph, PossibleQuestion>>()
 
     private fun saveStep(possibleQuestion: PossibleQuestion = PossibleQuestion.Nothing("")) {
-        steps.add(toGraphicalGraph(possibleQuestion))
+        steps.add(copy() to possibleQuestion)
     }
 
     fun addEdge(fromId: String, toId: String) {
@@ -33,9 +81,6 @@ class Graph(
     }
 
     private var edgesLeft = true
-    private var activeEdge: Edge? = null
-    private val augmentingPathEdges = mutableSetOf<Edge>()
-    private val blossomEdges = mutableSetOf<Edge>()
 
 
     fun runEdmondsAlgorithm() {
@@ -90,7 +135,13 @@ class Graph(
                 val commonRoot = findCommonRoot(edge.fromVertex, edge.toVertex)
                 if (commonRoot != null) {
                     markBlossomEdges(edge.fromVertex, edge.toVertex, commonRoot)
-                    saveStep(PossibleQuestion.MarkBlossom("Kelyhet találtunk.\nHúzzuk össze a kelyhet!", blossomEdges))
+                    saveStep(
+                        PossibleQuestion.MarkBlossom(
+                            "Kelyhet találtunk.\nHúzzuk össze a kelyhet!",
+                            edge,
+                            blossomEdges.toSet()
+                        )
+                    )
                     blossomEdges.clear()
                     makeBlossom(edge.fromVertex, edge.toVertex, commonRoot)
                     edge = edges.find { !it.visited }
@@ -101,7 +152,8 @@ class Graph(
                     saveStep(
                         PossibleQuestion.MarkAugmentingPath(
                             "Javítóutat találtunk.\nJavítsunk az út mentén!",
-                            augmentingPathEdges
+                            edge,
+                            augmentingPathEdges.toSet()
                         )
                     )
                     augmentingPathEdges.clear()
@@ -364,7 +416,8 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.DOUBLE_CIRCLE,
-                            highlight = DARK_GREEN
+                            highlight = DARK_GREEN,
+                            vertexType = VertexType.ROOT
                         )
                     )
                 }
@@ -376,7 +429,8 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.SQUARE,
-                            highlight = DARK_GREEN
+                            highlight = DARK_GREEN,
+                            vertexType = VertexType.INNER
                         )
                     )
                 }
@@ -388,7 +442,8 @@ class Graph(
                             coordinates.second,
                             vertex.id,
                             highlightType = HighlightType.CIRCLE,
-                            highlight = DARK_GREEN
+                            highlight = DARK_GREEN,
+                            vertexType = VertexType.OUTER
                         )
                     )
                 }

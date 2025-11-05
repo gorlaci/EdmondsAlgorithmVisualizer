@@ -2,16 +2,18 @@ package hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.VertexType
 
 data class GraphicalVertex(
     val x: Double = 0.0,
     val y: Double = 0.0,
     val label: String = "",
     val selected: Boolean = false,
+    val vertexType: VertexType = VertexType.NONE,
     val highlight: Color = Color.Transparent,
     val highlightType: HighlightType = HighlightType.CIRCLE,
-){
-    fun transformCoordinates( offsetX: Double, offsetY: Double ) = Offset(
+) {
+    fun transformCoordinates(offsetX: Double, offsetY: Double) = Offset(
         (offsetX + x).toFloat(),
         (offsetY - y).toFloat()
     )
@@ -23,7 +25,7 @@ data class GraphicalVertex(
         get() = (radiusInFloat * 2).toInt() - (label.length - 1) * 2
 }
 
-enum class HighlightType{
+enum class HighlightType {
     CIRCLE,
     SQUARE,
     DOUBLE_CIRCLE,
