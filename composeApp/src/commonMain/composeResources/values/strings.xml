@@ -1,5 +1,10 @@
 <resources>
-    <string name="draw_custom">Draw Custom Graph</string>
-    <string name="run_algorithm">Run Algorithm</string>
-    <string name="quiz">Quiz</string>
+    <string name="draw_custom_screen">Draw Custom Graph</string>
+    <string name="run_algorithm_screen">Run Algorithm</string>
+    <string name="quiz_screen">Quiz</string>
+    <string name="run_button">Run</string>
+    <string name="next_button">Next</string>
+    <string name="back_button">Back</string>
+    <string name="done_button">Done</string>
+    <string name="restart_button">Restart</string>
 </resources>

@@ -11,8 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
-import edmondsalgorithmvisualizer.composeapp.generated.resources.quiz
+import edmondsalgorithmvisualizer.composeapp.generated.resources.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz.QuestionMode.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz.QuizScreenViewmodel
@@ -43,7 +42,7 @@ fun QuizScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             SimpleTopAppbar(
-                title = stringResource(Res.string.quiz),
+                title = stringResource(Res.string.quiz_screen),
                 onBack = onBack,
             )
         }
@@ -181,19 +180,25 @@ fun QuizScreen(
                         onClick = { viewModel.onNext() },
                         enabled = nextEnabled
                     ) {
-                        Text("Next")
+                        Text(stringResource(Res.string.next_button))
                     }
                     Button(
                         onClick = { viewModel.onBack() },
                         enabled = backEnabled,
                     ) {
-                        Text("Back")
+                        Text(stringResource(Res.string.back_button))
                     }
 
                     Button(
                         onClick = { viewModel.onRun() },
                     ) {
-                        Text(if (quizStarted) "Restart" else "Run")
+                        Text(
+                            if (quizStarted) {
+                                stringResource(Res.string.restart_button)
+                            } else {
+                                stringResource(Res.string.run_button)
+                            }
+                        )
                     }
                 }
             }

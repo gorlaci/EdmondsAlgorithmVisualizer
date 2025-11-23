@@ -8,9 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
-import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom
-import edmondsalgorithmvisualizer.composeapp.generated.resources.quiz
-import edmondsalgorithmvisualizer.composeapp.generated.resources.run_algorithm
+import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom_screen
+import edmondsalgorithmvisualizer.composeapp.generated.resources.quiz_screen
+import edmondsalgorithmvisualizer.composeapp.generated.resources.run_algorithm_screen
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -27,7 +27,7 @@ fun MainMenuScreen(
         Button(
             onClick = onDrawGraphClick,
         ) {
-            Text(stringResource(Res.string.draw_custom))
+            Text(stringResource(Res.string.draw_custom_screen))
         }
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -35,7 +35,7 @@ fun MainMenuScreen(
         Button(
             onClick = onRunAlgorithmClick,
         ) {
-            Text(stringResource(Res.string.run_algorithm))
+            Text(stringResource(Res.string.run_algorithm_screen))
         }
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -43,7 +43,7 @@ fun MainMenuScreen(
         Button(
             onClick = onPlayQuizClick,
         ) {
-            Text(stringResource(Res.string.quiz))
+            Text(stringResource(Res.string.quiz_screen))
         }
     }
 }

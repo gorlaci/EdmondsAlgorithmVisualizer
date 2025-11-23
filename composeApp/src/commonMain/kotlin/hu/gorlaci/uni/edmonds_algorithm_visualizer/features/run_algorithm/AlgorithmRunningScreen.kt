@@ -7,8 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
-import edmondsalgorithmvisualizer.composeapp.generated.resources.run_algorithm
+import edmondsalgorithmvisualizer.composeapp.generated.resources.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.run_algorithm.AlgorithmRunningScreenViewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
@@ -27,7 +26,7 @@ fun AlgorithmRunningScreen(
 
     val viewModel = viewModel { AlgorithmRunningScreenViewModel(graphStorage, coroutineScope.coroutineContext) }
 
-    val selectedGraph by viewModel.selectedGraph
+    val selectedGraph by viewModel.currentGraph
 
     val graphicalGraph by viewModel.graphicalGraph
 
@@ -39,7 +38,7 @@ fun AlgorithmRunningScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             SimpleTopAppbar(
-                title = stringResource(Res.string.run_algorithm),
+                title = stringResource(Res.string.run_algorithm_screen),
                 onBack = onBack,
             )
         }
@@ -89,18 +88,18 @@ fun AlgorithmRunningScreen(
                         onClick = { viewModel.onNext() },
                         enabled = nextEnabled
                     ) {
-                        Text("Next")
+                        Text(stringResource(Res.string.next_button))
                     }
                     Button(
                         onClick = { viewModel.onBack() },
                         enabled = backEnabled
                     ) {
-                        Text("Back")
+                        Text(stringResource(Res.string.back_button))
                     }
                     Button(
                         onClick = { viewModel.onRun() },
                     ) {
-                        Text("Run")
+                        Text(stringResource(Res.string.run_button))
                     }
                 }
             }

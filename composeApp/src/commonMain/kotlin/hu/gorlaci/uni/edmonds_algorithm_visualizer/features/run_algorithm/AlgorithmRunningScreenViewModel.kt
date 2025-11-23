@@ -6,35 +6,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Graph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.StepType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
-class AlgorithmRunningScreenViewModel(
-    private val graphStorage: GraphStorage,
-    private val composableCoroutineContext: CoroutineContext,
+open class AlgorithmRunningScreenViewModel(
+    protected val graphStorage: GraphStorage,
+    protected val composableCoroutineContext: CoroutineContext,
 ) : ViewModel() {
 
+
     val graphList = graphStorage.getAllGraphs()
+    protected var selectedGraphIndex = 0
+    val currentGraph = mutableStateOf(graphList[selectedGraphIndex])
 
-    private var selectedGraphIndex = 0
+    protected val steps = mutableListOf<Pair<Graph, StepType>>(currentGraph.value to StepType.Nothing())
+    protected var step = 0
 
-    val selectedGraph = mutableStateOf(graphList[selectedGraphIndex])
-
-    private val graphicalGraphList = mutableListOf(graphList[0].toGraphicalGraph())
-
-    val graphicalGraph = mutableStateOf(graphicalGraphList[0])
+    val graphicalGraph = mutableStateOf(steps[0].first.toGraphicalGraph())
 
     val nextEnabled = mutableStateOf(false)
     val backEnabled = mutableStateOf(false)
 
-    private var step = 0
-
-    fun onNext() {
-        if (step < graphicalGraphList.size - 1) {
+    open fun onNext() {
+        if (step < steps.size - 1) {
             step++
-            graphicalGraph.value = graphicalGraphList[step]
+
+            setCurrentGraph()
 
             if (graphicalGraph.value.stepType is StepType.BlossomInAnimation
                 || graphicalGraph.value.stepType is StepType.BlossomOutAnimation
@@ -45,55 +45,45 @@ class AlgorithmRunningScreenViewModel(
         setButtons()
     }
 
-    fun onBack() {
+    open fun onBack() {
         if (step > 0) {
-            step--
-            graphicalGraph.value = graphicalGraphList[step]
 
-            if (graphicalGraph.value.stepType is StepType.BlossomInAnimation
-                || graphicalGraph.value.stepType is StepType.BlossomOutAnimation
-            ) {
+            step--
+            setCurrentGraph()
+
+            if (graphicalGraph.value.stepType is StepType.BlossomInAnimation) {
+                // skip blossom animation on back
                 step--
-                graphicalGraph.value = graphicalGraphList[step]
+                setCurrentGraph()
             }
         }
         setButtons()
     }
 
-    fun onRun() {
-
-        val graph = selectedGraph.value
-
-        graphicalGraphList.clear()
-        graph.runEdmondsAlgorithm()
-        graphicalGraphList.addAll(
-            graph.steps.map { (graph, possibleQuestion) ->
-                graph.toGraphicalGraph(possibleQuestion)
-            }
-        )
-        step = 0
-        setButtons()
+    protected fun setCurrentGraph() {
+        currentGraph.value = steps[step].first
+        graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
     }
 
-    fun setButtons() {
-        nextEnabled.value = step < graphicalGraphList.size - 1
+    open fun setButtons() {
+        nextEnabled.value = step < steps.size - 1
         backEnabled.value = step > 0
     }
 
-    fun onGraphSelected(index: Int) {
+    open fun onGraphSelected(index: Int) {
         selectedGraphIndex = index
-        selectedGraph.value = graphList[selectedGraphIndex]
+        currentGraph.value = graphList[selectedGraphIndex]
 
-        graphicalGraphList.clear()
-        graphicalGraphList.add(selectedGraph.value.toGraphicalGraph())
-        graphicalGraph.value = graphicalGraphList[0]
+        steps.clear()
+        steps.add(currentGraph.value to StepType.Nothing())
+        graphicalGraph.value = currentGraph.value.toGraphicalGraph()
         step = 0
         setButtons()
     }
 
     val blossomAnimationProgress = Animatable(0f)
 
-    private fun startBlossomAnimation() {
+    protected fun startBlossomAnimation() {
         viewModelScope.launch {
             withContext(composableCoroutineContext) {
                 blossomAnimationProgress.snapTo(0f)
@@ -105,12 +95,12 @@ class AlgorithmRunningScreenViewModel(
                         when (stepType) {
                             is StepType.BlossomInAnimation -> {
                                 graphicalGraph.value = graphicalGraph.value
-                                    .animateBlossomVertices(stepType.blossomVertices, selectedGraph.value, value)
+                                    .animateBlossomVertices(stepType.blossomVertices, currentGraph.value, value)
                             }
 
                             is StepType.BlossomOutAnimation -> {
                                 graphicalGraph.value = graphicalGraph.value
-                                    .animateBlossomVertices(stepType.blossomVertices, selectedGraph.value, 1f - value)
+                                    .animateBlossomVertices(stepType.blossomVertices, currentGraph.value, 1f - value)
                             }
 
                             else -> {}
@@ -121,5 +111,17 @@ class AlgorithmRunningScreenViewModel(
             }
         }
     }
+
+    open fun onRun() {
+
+        val graph = currentGraph.value
+
+        steps.clear()
+        graph.runEdmondsAlgorithm()
+        steps.addAll(graph.steps)
+        step = 0
+        setButtons()
+    }
+
 
 }

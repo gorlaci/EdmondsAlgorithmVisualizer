@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
-import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom
+import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom_screen
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.SimpleTopAppbar
@@ -35,7 +35,7 @@ fun GraphDrawingScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             SimpleTopAppbar(
-                title = stringResource(Res.string.draw_custom),
+                title = stringResource(Res.string.draw_custom_screen),
                 onBack = onBack,
             )
         }

@@ -1,14 +1,9 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.run_algorithm.AlgorithmRunningScreenViewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Edge
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Graph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Vertex
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.Answer
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.EdgeType
@@ -17,28 +12,15 @@ import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.BLUE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.ORANGE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.PINK
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.util.containsSameEdges
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 class QuizScreenViewmodel(
-    private val graphStorage: GraphStorage,
-    private val composableCoroutineContext: CoroutineContext,
-) : ViewModel() {
+    graphStorage: GraphStorage,
+    composableCoroutineContext: CoroutineContext,
+) : AlgorithmRunningScreenViewModel(graphStorage, composableCoroutineContext) {
 
-    val graphList = graphStorage.getAllGraphs()
 
-    private var selectedGraphIndex = 0
-
-    val currentGraph = mutableStateOf(graphList[selectedGraphIndex])
-
-    private val steps = mutableListOf<Pair<Graph, StepType>>(currentGraph.value to StepType.Nothing())
-
-    val graphicalGraph = mutableStateOf(steps[0].first.toGraphicalGraph())
-
-    val nextEnabled = mutableStateOf(false)
-    val backEnabled = mutableStateOf(false)
     val quizStarted = mutableStateOf(false)
 
     val questionMode = mutableStateOf(QuestionMode.NOTHING)
@@ -46,15 +28,12 @@ class QuizScreenViewmodel(
 
     val questionFrequency = mutableStateOf(1f)
 
-    private var step = 0
 
-    fun onNext() {
+    override fun onNext() {
         if (step < steps.size - 1) {
             step++
 
-            currentGraph.value = steps[step].first
-
-            graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
+            setCurrentGraph()
 
             questionMode.value = QuestionMode.NOTHING
 
@@ -97,58 +76,31 @@ class QuizScreenViewmodel(
         setButtons()
     }
 
-    fun onBack() {
-        if (step > 0) {
-            step--
-
-            currentGraph.value = steps[step].first
-
-            graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
-
-            if (graphicalGraph.value.stepType is StepType.BlossomInAnimation) {
-                // skip blossom animation on back
-                if (step > 0) {
-                    step--
-                }
-                currentGraph.value = steps[step].first
-                graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
-            }
-
-            questionMode.value = QuestionMode.NOTHING
-        }
-        setButtons()
-    }
-
-    fun onRun() {
-
-        val graph = currentGraph.value
-
-        steps.clear()
-        graph.runEdmondsAlgorithm()
-        steps.addAll(graph.steps)
-        step = 0
+    override fun onBack() {
         questionMode.value = QuestionMode.NOTHING
-        setButtons()
-        quizStarted.value = true
+
+        super.onBack()
     }
 
-    fun setButtons() {
+    override fun onRun() {
+
+        questionMode.value = QuestionMode.NOTHING
+        quizStarted.value = true
+
+        super.onRun()
+    }
+
+    override fun setButtons() {
         nextEnabled.value =
             step < steps.size - 1 && questionMode.value == QuestionMode.NOTHING || questionMode.value == QuestionMode.SHOW_ANSWER
         backEnabled.value = step > 0
     }
 
-    fun onGraphSelected(index: Int) {
-        selectedGraphIndex = index
-        currentGraph.value = graphList[selectedGraphIndex]
-
-        steps.clear()
-        steps.add(currentGraph.value to StepType.Nothing())
-        graphicalGraph.value = currentGraph.value.toGraphicalGraph()
-        step = 0
+    override fun onGraphSelected(index: Int) {
         quizStarted.value = false
         questionMode.value = QuestionMode.NOTHING
-        setButtons()
+
+        super.onGraphSelected(index)
     }
 
     fun onEdgeTypeAnswer(answer: EdgeType) {
@@ -283,25 +235,6 @@ class QuizScreenViewmodel(
         questionFrequency.value = newFrequency
     }
 
-    val blossomAnimationProgress = Animatable(0f)
-
-    private fun startBlossomAnimation() {
-        viewModelScope.launch {
-            withContext(composableCoroutineContext) {
-                blossomAnimationProgress.snapTo(0f)
-                blossomAnimationProgress.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(durationMillis = 1200, easing = FastOutLinearInEasing),
-                    block = {
-                        val blossomInAnimation = graphicalGraph.value.stepType as StepType.BlossomInAnimation
-                        graphicalGraph.value = graphicalGraph.value
-                            .animateBlossomVertices(blossomInAnimation.blossomVertices, currentGraph.value, value)
-                    }
-                )
-                onNext()
-            }
-        }
-    }
 }
 
 enum class QuestionMode {
