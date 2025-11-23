@@ -32,6 +32,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       # Runs a single command using the runners shell
       - name: Build web artifacts
         run: ./gradlew wasmJsBrowserDistribution
