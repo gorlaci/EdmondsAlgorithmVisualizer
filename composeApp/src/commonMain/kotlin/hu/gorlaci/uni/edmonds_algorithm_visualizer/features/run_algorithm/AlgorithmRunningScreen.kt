@@ -24,7 +24,12 @@ fun AlgorithmRunningScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    val viewModel = viewModel { AlgorithmRunningScreenViewModel(graphStorage, coroutineScope.coroutineContext) }
+    val viewModel = viewModel {
+        AlgorithmRunningScreenViewModel(
+            graphStorage,
+            coroutineScope.coroutineContext
+        )
+    }
 
     val selectedGraph by viewModel.currentGraph
 
@@ -32,7 +37,6 @@ fun AlgorithmRunningScreen(
 
     val nextEnabled by viewModel.nextEnabled
     val backEnabled by viewModel.backEnabled
-
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -63,8 +67,6 @@ fun AlgorithmRunningScreen(
                 )
             }
 
-
-
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxSize()
@@ -90,12 +92,14 @@ fun AlgorithmRunningScreen(
                     ) {
                         Text(stringResource(Res.string.next_button))
                     }
+
                     Button(
                         onClick = { viewModel.onBack() },
                         enabled = backEnabled
                     ) {
                         Text(stringResource(Res.string.back_button))
                     }
+
                     Button(
                         onClick = { viewModel.onRun() },
                     ) {
@@ -105,5 +109,4 @@ fun AlgorithmRunningScreen(
             }
         }
     }
-
 }

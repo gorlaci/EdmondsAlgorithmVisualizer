@@ -28,7 +28,12 @@ fun QuizScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    val viewModel = viewModel { QuizScreenViewmodel(graphStorage, coroutineScope.coroutineContext) }
+    val viewModel = viewModel {
+        QuizScreenViewmodel(
+            graphStorage,
+            coroutineScope.coroutineContext
+        )
+    }
 
     val selectedGraph by viewModel.currentGraph
 
@@ -50,7 +55,6 @@ fun QuizScreen(
         Row(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
         ) {
-
 
             Column(
                 modifier = Modifier.fillMaxHeight().weight(1f)
@@ -75,8 +79,6 @@ fun QuizScreen(
                         }
                 )
             }
-
-
 
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -204,5 +206,4 @@ fun QuizScreen(
             }
         }
     }
-
 }
