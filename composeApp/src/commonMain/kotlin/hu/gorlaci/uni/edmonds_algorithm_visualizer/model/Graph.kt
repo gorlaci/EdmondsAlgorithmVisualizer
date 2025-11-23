@@ -1,7 +1,7 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.model
 
 import androidx.compose.ui.graphics.Color
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.PossibleQuestion
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.StepType
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.BLUE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.DARK_GREEN
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.PINK
@@ -65,10 +65,10 @@ class Graph(
         )
     }
 
-    val steps = mutableListOf<Pair<Graph, PossibleQuestion>>()
+    val steps = mutableListOf<Pair<Graph, StepType>>()
 
-    private fun saveStep(possibleQuestion: PossibleQuestion = PossibleQuestion.Nothing("")) {
-        steps.add(copy() to possibleQuestion)
+    private fun saveStep(stepType: StepType = StepType.Nothing("")) {
+        steps.add(copy() to stepType)
     }
 
     fun addEdge(fromId: String, toId: String) {
@@ -85,13 +85,13 @@ class Graph(
 
     fun runEdmondsAlgorithm() {
         saveStep()
-        saveStep(PossibleQuestion.Nothing("Kiindulunk az üres párosításból"))
+        saveStep(StepType.Nothing("Kiindulunk az üres párosításból"))
         while (edgesLeft) {
             buildForest()
             saveStep()
         }
         reset()
-        saveStep(PossibleQuestion.Nothing("Bontsuk ki a kelyheket!"))
+        saveStep(StepType.Nothing("Bontsuk ki a kelyheket!"))
         val verticesCopy = vertices.toList()
         verticesCopy.forEach { vertex ->
             if (vertex is BlossomVertex) {
@@ -99,7 +99,7 @@ class Graph(
             }
         }
         reset()
-        saveStep(PossibleQuestion.Nothing("A megtalált párosításunk maximális"))
+        saveStep(StepType.Nothing("A megtalált párosításunk maximális"))
     }
 
     private fun reset() {
@@ -117,29 +117,35 @@ class Graph(
         for (vertex in vertices) {
             vertex.type = if (vertex.pair == null) VertexType.ROOT else VertexType.CLEARING
         }
-        saveStep(PossibleQuestion.Nothing("Megépítjük a 0 élű alternáló erdőt"))
+        saveStep(StepType.Nothing("Megépítjük a 0 élű alternáló erdőt"))
 
         var edge = edges.find { !it.visited }
         while (edge != null) {
             edge.visited = true
             activeEdge = edge
             saveStep(
-                PossibleQuestion.SelectedEdge(
+                StepType.SelectedEdge(
                     "Vizsgáljuk a ${edge.fromVertex.id}-${edge.toVertex.id} élt",
                     edge,
                     edge.getType()
                 )
             )
             if (edge.fromVertex.type.isOuter() && edge.toVertex.type.isOuter()) {
-                saveStep(PossibleQuestion.Nothing("Külső-külső"))
+                saveStep(StepType.Nothing("Külső-külső"))
                 val commonRoot = findCommonRoot(edge.fromVertex, edge.toVertex)
                 if (commonRoot != null) {
                     markBlossomEdges(edge.fromVertex, edge.toVertex, commonRoot)
                     saveStep(
-                        PossibleQuestion.MarkBlossom(
+                        StepType.MarkBlossom(
                             "Kelyhet találtunk.\nHúzzuk össze a kelyhet!",
                             edge,
                             blossomEdges.toSet()
+                        )
+                    )
+                    saveStep(
+                        StepType.BlossomInAnimation(
+                            "Kelyhet találtunk.\nHúzzuk össze a kelyhet!",
+                            getBlossomVertices(edge.fromVertex, edge.toVertex, commonRoot).toSet(),
                         )
                     )
                     blossomEdges.clear()
@@ -150,7 +156,7 @@ class Graph(
                 } else {
                     markAugmentingPathEdges(edge.fromVertex, edge.toVertex)
                     saveStep(
-                        PossibleQuestion.MarkAugmentingPath(
+                        StepType.MarkAugmentingPath(
                             "Javítóutat találtunk.\nJavítsunk az út mentén!",
                             edge,
                             augmentingPathEdges.toSet()
@@ -159,7 +165,7 @@ class Graph(
                     augmentingPathEdges.clear()
                     augmentAlongAlternatingPath(edge.fromVertex, edge.toVertex)
                     reset()
-                    saveStep(PossibleQuestion.Nothing("Bővítettük a párosítást"))
+                    saveStep(StepType.Nothing("Bővítettük a párosítást"))
                     activeEdge = null
                     return
                 }
@@ -276,7 +282,7 @@ class Graph(
 
     private fun deconstructBlossom(blossomVertex: BlossomVertex) {
 
-        saveStep(PossibleQuestion.DeconstructBlossom("Bontsuk ki a ${blossomVertex.id} kelyhet!", blossomVertex))
+        saveStep(StepType.DeconstructBlossom("Bontsuk ki a ${blossomVertex.id} kelyhet!", blossomVertex))
 
         val blossomVertices = blossomVertex.previousStructure.vertices
 
@@ -327,6 +333,13 @@ class Graph(
 
         reset()
 
+        saveStep(
+            StepType.BlossomOutAnimation(
+                "Bontsuk ki a ${blossomVertex.id} kelyhet!",
+                blossomVertices.toSet(),
+            )
+        )
+
         for (vertex in blossomVertex.previousStructure.vertices) {
             if (vertex is BlossomVertex) {
                 deconstructBlossom(vertex)
@@ -353,7 +366,7 @@ class Graph(
     }
 
     private fun extendForest(outerVertex: Vertex, clearingVertex: Vertex) {
-        saveStep(PossibleQuestion.Nothing("Külső-tisztás\nBővítsük az erdőt!"))
+        saveStep(StepType.Nothing("Külső-tisztás\nBővítsük az erdőt!"))
 
         clearingVertex.type = VertexType.INNER
         clearingVertex.parent = outerVertex
@@ -400,7 +413,7 @@ class Graph(
         }
     }
 
-    fun toGraphicalGraph(possibleQuestion: PossibleQuestion = PossibleQuestion.Nothing()): GraphicalGraph {
+    fun toGraphicalGraph(stepType: StepType = StepType.Nothing()): GraphicalGraph {
 
         val graphicalVertices = mutableListOf<GraphicalVertex>()
 
@@ -482,7 +495,7 @@ class Graph(
             )
         }
 
-        return GraphicalGraph(graphicalVertices, graphicalEdges, possibleQuestion)
+        return GraphicalGraph(graphicalVertices, graphicalEdges, stepType)
     }
 
     private fun edgeHighlightColor(edge: Edge): Color {
@@ -502,7 +515,7 @@ class Graph(
     }
 
 
-    private fun getVertexCoordinates(vertex: Vertex): Pair<Double, Double> {
+    fun getVertexCoordinates(vertex: Vertex): Pair<Double, Double> {
         var coordinatesSum = Pair(0.0, 0.0)
         for (char in vertex.id) {
             val coord = idCoordinatesMap[char] ?: Pair(0.0, 0.0)

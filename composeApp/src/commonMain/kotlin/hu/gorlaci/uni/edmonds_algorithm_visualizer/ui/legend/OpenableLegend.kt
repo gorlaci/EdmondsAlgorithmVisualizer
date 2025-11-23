@@ -1,5 +1,6 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.legend
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -37,7 +38,7 @@ fun OpenableLegend(
             }
         }
 
-        if (legendExpanded.value) {
+        AnimatedVisibility(legendExpanded.value) {
             Card {
                 Legend(
                     modifier = Modifier.padding(10.dp).size(200.dp, 500.dp).weight(1f)

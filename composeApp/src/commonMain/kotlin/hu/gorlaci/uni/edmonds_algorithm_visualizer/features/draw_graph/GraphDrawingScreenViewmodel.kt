@@ -1,4 +1,4 @@
-package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph
+package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.draw_graph
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel

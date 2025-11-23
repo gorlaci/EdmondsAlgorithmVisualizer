@@ -1,0 +1,5 @@
+<resources>
+    <string name="draw_custom">Saját gráf rajzolása</string>
+    <string name="run_algorithm">Algoritmus futtatása</string>
+    <string name="quiz">Kikérdező</string>
+</resources>

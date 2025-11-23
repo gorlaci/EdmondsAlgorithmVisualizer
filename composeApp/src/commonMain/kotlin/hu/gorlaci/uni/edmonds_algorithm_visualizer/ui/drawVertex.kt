@@ -13,24 +13,26 @@ fun DrawScope.drawVertex(
 ) {
     val radius = vertex.radiusInFloat
 
-    when( vertex.highlightType ) {
+    when (vertex.highlightType) {
         HighlightType.CIRCLE -> drawCircle(
             color = vertex.highlight,
             radius = radius + 5f,
             center = center,
         )
+
         HighlightType.SQUARE -> {
             drawRect(
                 color = vertex.highlight,
-                size = Size( (radius + 5f) * 2f, (radius + 5f) * 2f ),
-                topLeft = center - Offset( radius + 5f, radius + 5f )
+                size = Size((radius + 5f) * 2f, (radius + 5f) * 2f),
+                topLeft = center - Offset(radius + 5f, radius + 5f)
             )
             drawRect(
                 color = Color.White,
-                size = Size( radius * 2f, radius * 2f ),
-                topLeft = center - Offset( radius, radius )
+                size = Size(radius * 2f, radius * 2f),
+                topLeft = center - Offset(radius, radius)
             )
         }
+
         HighlightType.DOUBLE_CIRCLE -> {
             drawCircle(
                 color = vertex.highlight,
@@ -52,12 +54,12 @@ fun DrawScope.drawVertex(
 
     drawCircle(
         color = Color.Black,
-        radius = if( vertex.selected ) radius + 2f else radius,
+        radius = radius,
         center = center,
     )
     drawCircle(
-        color = Color.White,
-        radius = if( vertex.selected ) radius - 4f else radius - 3f,
+        color = if (vertex.selected) ORANGE else Color.White,
+        radius = radius - 3f,
         center = center,
     )
 }

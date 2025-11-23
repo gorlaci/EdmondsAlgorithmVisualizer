@@ -1,4 +1,4 @@
-package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.mainMenu
+package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.main_menu
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -7,6 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
+import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom
+import edmondsalgorithmvisualizer.composeapp.generated.resources.quiz
+import edmondsalgorithmvisualizer.composeapp.generated.resources.run_algorithm
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MainMenuScreen(
@@ -22,7 +27,7 @@ fun MainMenuScreen(
         Button(
             onClick = onDrawGraphClick,
         ) {
-            Text("Draw custom graph")
+            Text(stringResource(Res.string.draw_custom))
         }
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -30,7 +35,7 @@ fun MainMenuScreen(
         Button(
             onClick = onRunAlgorithmClick,
         ) {
-            Text("Run Edmonds' algorithm")
+            Text(stringResource(Res.string.run_algorithm))
         }
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -38,7 +43,7 @@ fun MainMenuScreen(
         Button(
             onClick = onPlayQuizClick,
         ) {
-            Text("Play Quiz")
+            Text(stringResource(Res.string.quiz))
         }
     }
 }

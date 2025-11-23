@@ -8,8 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.drawGraph.GraphDrawingScreen
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.mainMenu.MainMenuScreen
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.draw_graph.GraphDrawingScreen
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.main_menu.MainMenuScreen
 
 @Composable
 fun NavGraph(
@@ -23,15 +23,14 @@ fun NavGraph(
         composable(Screen.GraphDrawingScreen.route) {
             GraphDrawingScreen(
                 graphStorage = graphStorage,
-                onFinish = {
-                    navHostController.navigate(Screen.CanvasScreen.route)
-                },
+                onBack = { navHostController.popBackStack() },
             )
         }
 
         composable(Screen.CanvasScreen.route) {
             AlgorithmRunningScreen(
                 graphStorage = graphStorage,
+                onBack = { navHostController.popBackStack() },
             )
         }
 
@@ -52,6 +51,7 @@ fun NavGraph(
         composable(Screen.QuizScreen.route) {
             QuizScreen(
                 graphStorage = graphStorage,
+                onBack = { navHostController.popBackStack() },
             )
         }
     }

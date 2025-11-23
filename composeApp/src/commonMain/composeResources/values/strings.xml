@@ -1,0 +1,5 @@
+<resources>
+    <string name="draw_custom">Draw Custom Graph</string>
+    <string name="run_algorithm">Run Algorithm</string>
+    <string name="quiz">Quiz</string>
+</resources>

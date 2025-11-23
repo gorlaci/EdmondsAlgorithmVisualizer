@@ -1,22 +1,30 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.quiz
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Edge
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Graph
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.Vertex
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.Answer
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.EdgeType
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.PossibleQuestion
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.model.quiz.StepType
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.BLUE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.ORANGE
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.PINK
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.util.containsSameEdges
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 class QuizScreenViewmodel(
     private val graphStorage: GraphStorage,
+    private val composableCoroutineContext: CoroutineContext,
 ) : ViewModel() {
 
     val graphList = graphStorage.getAllGraphs()
@@ -25,11 +33,12 @@ class QuizScreenViewmodel(
 
     val currentGraph = mutableStateOf(graphList[selectedGraphIndex])
 
-    private val steps = mutableListOf<Pair<Graph, PossibleQuestion>>(currentGraph.value to PossibleQuestion.Nothing())
+    private val steps = mutableListOf<Pair<Graph, StepType>>(currentGraph.value to StepType.Nothing())
 
     val graphicalGraph = mutableStateOf(steps[0].first.toGraphicalGraph())
 
     val nextEnabled = mutableStateOf(false)
+    val backEnabled = mutableStateOf(false)
     val quizStarted = mutableStateOf(false)
 
     val questionMode = mutableStateOf(QuestionMode.NOTHING)
@@ -49,27 +58,33 @@ class QuizScreenViewmodel(
 
             questionMode.value = QuestionMode.NOTHING
 
-            val possibleQuestion = graphicalGraph.value.possibleQuestion
+            val possibleQuestion = graphicalGraph.value.stepType
+
+            if (possibleQuestion is StepType.BlossomInAnimation) {
+                startBlossomAnimation()
+                setButtons()
+                return
+            }
 
             val random = Random.nextFloat()
 
             if (random < questionFrequency.value) {
                 when (possibleQuestion) {
-                    is PossibleQuestion.SelectedEdge -> {
+                    is StepType.SelectedEdge -> {
                         questionMode.value = QuestionMode.EDGE_TYPE
                     }
 
-                    is PossibleQuestion.MarkAugmentingPath -> {
+                    is StepType.MarkAugmentingPath -> {
                         questionMode.value = QuestionMode.MARK_AUGMENTING_PATH
-                        clearMarkedEdges()
+                        clearMarkedVertices()
                         graphicalGraph.value = graphicalGraph.value
                             .removeAllEdgeHighlights()
                             .addHighlight(possibleQuestion.currentEdge, ORANGE)
                     }
 
-                    is PossibleQuestion.MarkBlossom -> {
+                    is StepType.MarkBlossom -> {
                         questionMode.value = QuestionMode.MARK_BLOSSOM
-                        clearMarkedEdges()
+                        clearMarkedVertices()
                         graphicalGraph.value = graphicalGraph.value
                             .removeAllEdgeHighlights()
                             .addHighlight(possibleQuestion.currentEdge, ORANGE)
@@ -78,6 +93,28 @@ class QuizScreenViewmodel(
                     else -> {}
                 }
             }
+        }
+        setButtons()
+    }
+
+    fun onBack() {
+        if (step > 0) {
+            step--
+
+            currentGraph.value = steps[step].first
+
+            graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
+
+            if (graphicalGraph.value.stepType is StepType.BlossomInAnimation) {
+                // skip blossom animation on back
+                if (step > 0) {
+                    step--
+                }
+                currentGraph.value = steps[step].first
+                graphicalGraph.value = steps[step].first.toGraphicalGraph(steps[step].second)
+            }
+
+            questionMode.value = QuestionMode.NOTHING
         }
         setButtons()
     }
@@ -98,6 +135,7 @@ class QuizScreenViewmodel(
     fun setButtons() {
         nextEnabled.value =
             step < steps.size - 1 && questionMode.value == QuestionMode.NOTHING || questionMode.value == QuestionMode.SHOW_ANSWER
+        backEnabled.value = step > 0
     }
 
     fun onGraphSelected(index: Int) {
@@ -105,7 +143,7 @@ class QuizScreenViewmodel(
         currentGraph.value = graphList[selectedGraphIndex]
 
         steps.clear()
-        steps.add(currentGraph.value to PossibleQuestion.Nothing())
+        steps.add(currentGraph.value to StepType.Nothing())
         graphicalGraph.value = currentGraph.value.toGraphicalGraph()
         step = 0
         quizStarted.value = false
@@ -115,7 +153,7 @@ class QuizScreenViewmodel(
 
     fun onEdgeTypeAnswer(answer: EdgeType) {
 
-        val question = graphicalGraph.value.possibleQuestion as PossibleQuestion.SelectedEdge
+        val question = graphicalGraph.value.stepType as StepType.SelectedEdge
 
         lastAnswer.value = if (answer == question.edgeType) {
             Answer.Correct
@@ -126,82 +164,79 @@ class QuizScreenViewmodel(
         showAnswer()
     }
 
-    private val markedEdges = mutableSetOf<Edge>()
+    val markedVertices = mutableStateOf(listOf<Vertex>())
+    val confirmationDisplayed = mutableStateOf(false)
 
-    private var firstVertexForEdge: Vertex? = null
-
-    private fun clearMarkedEdges() {
-        markedEdges.clear()
-        firstVertexForEdge = null
+    private fun clearMarkedVertices() {
+        markedVertices.value = listOf()
     }
 
     fun onClick(x: Double, y: Double) {
-        val possibleQuestion = graphicalGraph.value.possibleQuestion
+        val possibleQuestion = graphicalGraph.value.stepType
 
-        if (possibleQuestion is PossibleQuestion.MarkAugmentingPath ||
-            possibleQuestion is PossibleQuestion.MarkBlossom
+        if (possibleQuestion is StepType.MarkAugmentingPath ||
+            possibleQuestion is StepType.MarkBlossom
         ) {
 
             val graph = currentGraph.value
 
             val clickedVertex = graph.getVertexByCoordinates(x, y)
             if (clickedVertex != null) {
-                if (firstVertexForEdge == null) {
-                    firstVertexForEdge = clickedVertex
-                    graphicalGraph.value = graphicalGraph.value.addHighlight(clickedVertex)
+                if (markedVertices.value.lastOrNull() == clickedVertex) {
+                    markedVertices.value = markedVertices.value.dropLast(1)
+                    graphicalGraph.value = graphicalGraph.value
+                        .removeHighlight(clickedVertex)
                 } else {
-
-                    if (firstVertexForEdge == clickedVertex) {
-                        graphicalGraph.value = graphicalGraph.value.restoreHighlight(clickedVertex)
-                        firstVertexForEdge = null
-                        return
-                    }
-
-                    val selectedEdge = graph.edges.find { edge ->
-                        (edge.fromVertex == firstVertexForEdge && edge.toVertex == clickedVertex) ||
-                                (edge.toVertex == firstVertexForEdge && edge.fromVertex == clickedVertex)
-                    }
-                    if (selectedEdge == null) {
-                        return
-                    }
-
-                    if (markedEdges.contains(selectedEdge)) {
-                        graphicalGraph.value = graphicalGraph.value
-                            .restoreHighlight(firstVertexForEdge!!)
-                            .removeHighlight(selectedEdge)
-
-                        markedEdges.remove(selectedEdge)
-                    } else {
-                        markedEdges.add(selectedEdge)
-                        graphicalGraph.value = graphicalGraph.value
-                            .addHighlight(
-                                selectedEdge,
-                                if (possibleQuestion is PossibleQuestion.MarkBlossom) PINK else BLUE
-                            )
-                            .restoreHighlight(firstVertexForEdge!!)
-                    }
-                    firstVertexForEdge = null
+                    markedVertices.value += clickedVertex
+                    graphicalGraph.value = graphicalGraph.value
+                        .addHighlight(clickedVertex)
                 }
             }
         }
     }
 
-    fun onAugmentingPathSubmitted() {
-        val question = graphicalGraph.value.possibleQuestion as PossibleQuestion.MarkAugmentingPath
+    private fun getMarkedEdges(): Set<Edge> {
+        val markedEdges = mutableSetOf<Edge>()
+        for (i in 0..markedVertices.value.size - 2) {
+            val aId = markedVertices.value[i].id
+            val bId = markedVertices.value[i + 1].id
+            val edge = currentGraph.value.edges.find { edge ->
+                (edge.fromVertex.id == aId && edge.toVertex.id == bId) ||
+                        (edge.fromVertex.id == bId && edge.toVertex.id == aId)
+            }
+            if (edge != null) {
+                markedEdges.add(edge)
+            }
+        }
+        return markedEdges
+    }
 
-        lastAnswer.value = if (containsSameEdges(markedEdges, question.pathEdges)) {
+    fun onSubmit() {
+        val possibleQuestion = graphicalGraph.value.stepType
+
+        when (possibleQuestion) {
+            is StepType.MarkAugmentingPath -> onAugmentingPathSubmitted()
+            is StepType.MarkBlossom -> onBlossomSubmitted()
+            else -> {}
+        }
+        confirmationDisplayed.value = false
+    }
+
+    fun onAugmentingPathSubmitted() {
+        val question = graphicalGraph.value.stepType as StepType.MarkAugmentingPath
+
+        lastAnswer.value = if (containsSameEdges(getMarkedEdges(), question.pathEdges)) {
             Answer.Correct
         } else {
-            println("markedEdges: ${markedEdges.joinToString { "(${it.fromVertex.id}, ${it.toVertex.id})" }}")
             Answer.Incorrect("A javító út a következő élekből áll: ${question.pathEdges.joinToString { "(${it.fromVertex.id}, ${it.toVertex.id})" }}")
         }
         showAnswer()
     }
 
     fun onBlossomSubmitted() {
-        val question = graphicalGraph.value.possibleQuestion as PossibleQuestion.MarkBlossom
+        val question = graphicalGraph.value.stepType as StepType.MarkBlossom
 
-        lastAnswer.value = if (containsSameEdges(markedEdges, question.blossomEdges)) {
+        lastAnswer.value = if (containsSameEdges(getMarkedEdges(), question.blossomEdges)) {
             Answer.Correct
         } else {
             Answer.Incorrect("A kelyhet a következő élek alkotják: ${question.blossomEdges.joinToString { "(${it.fromVertex.id}, ${it.toVertex.id})" }}")
@@ -209,8 +244,33 @@ class QuizScreenViewmodel(
         showAnswer()
     }
 
+    fun displayConfirmation() {
+        val augmentingPath = questionMode.value == QuestionMode.MARK_AUGMENTING_PATH
+
+        var newGraphicalGraph = graphicalGraph.value
+        for (edge in getMarkedEdges()) {
+            newGraphicalGraph = newGraphicalGraph.addHighlight(edge, if (augmentingPath) BLUE else PINK)
+        }
+        graphicalGraph.value = newGraphicalGraph
+
+        confirmationDisplayed.value = true
+    }
+
+    fun onContinueSelection() {
+        graphicalGraph.value = graphicalGraph.value
+            .removeAllEdgeHighlights()
+            .addHighlight(
+                edge = (graphicalGraph.value.stepType as? StepType.MarkAugmentingPath)?.currentEdge
+                    ?: (graphicalGraph.value.stepType as? StepType.MarkBlossom)?.currentEdge
+                    ?: return,
+                color = ORANGE
+            )
+
+        confirmationDisplayed.value = false
+    }
+
     private fun showAnswer() {
-        (graphicalGraph.value.possibleQuestion as? PossibleQuestion.SelectedEdge)?.let {
+        (graphicalGraph.value.stepType as? StepType.SelectedEdge)?.let {
             if (it.edgeType == EdgeType.OUTER_OUTER) {
                 onNext()
             }
@@ -223,6 +283,25 @@ class QuizScreenViewmodel(
         questionFrequency.value = newFrequency
     }
 
+    val blossomAnimationProgress = Animatable(0f)
+
+    private fun startBlossomAnimation() {
+        viewModelScope.launch {
+            withContext(composableCoroutineContext) {
+                blossomAnimationProgress.snapTo(0f)
+                blossomAnimationProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 1200, easing = FastOutLinearInEasing),
+                    block = {
+                        val blossomInAnimation = graphicalGraph.value.stepType as StepType.BlossomInAnimation
+                        graphicalGraph.value = graphicalGraph.value
+                            .animateBlossomVertices(blossomInAnimation.blossomVertices, currentGraph.value, value)
+                    }
+                )
+                onNext()
+            }
+        }
+    }
 }
 
 enum class QuestionMode {
