@@ -39,7 +39,7 @@ class QuizScreenViewmodel(
 
             val possibleQuestion = graphicalGraph.value.stepType
 
-            if (possibleQuestion is StepType.BlossomInAnimation) {
+            if (possibleQuestion is StepType.BlossomInAnimation || possibleQuestion is StepType.BlossomOutAnimation) {
                 startBlossomAnimation()
                 setButtons()
                 return

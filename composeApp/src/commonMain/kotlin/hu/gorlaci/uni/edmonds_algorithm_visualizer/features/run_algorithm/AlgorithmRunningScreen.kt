@@ -1,3 +1,5 @@
+package hu.gorlaci.uni.edmonds_algorithm_visualizer.features.run_algorithm
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -9,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edmondsalgorithmvisualizer.composeapp.generated.resources.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
-import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.run_algorithm.AlgorithmRunningScreenViewModel
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphSelectionDropdown
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.SimpleTopAppbar

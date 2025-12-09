@@ -1,6 +1,5 @@
 package hu.gorlaci.uni.edmonds_algorithm_visualizer.navigation
 
-import AlgorithmRunningScreen
 import QuizScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -10,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.draw_graph.GraphDrawingScreen
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.main_menu.MainMenuScreen
+import hu.gorlaci.uni.edmonds_algorithm_visualizer.features.run_algorithm.AlgorithmRunningScreen
 
 @Composable
 fun NavGraph(

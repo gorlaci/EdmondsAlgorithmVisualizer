@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edmondsalgorithmvisualizer.composeapp.generated.resources.Res
-import edmondsalgorithmvisualizer.composeapp.generated.resources.draw_custom_screen
+import edmondsalgorithmvisualizer.composeapp.generated.resources.*
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.data.GraphStorage
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.GraphCanvas
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.SimpleTopAppbar
@@ -51,6 +51,7 @@ fun GraphDrawingScreen(
                 TextField(
                     value = name,
                     onValueChange = { viewModel.onNameChange(it) },
+                    modifier = Modifier.padding(10.dp)
                 )
 
                 GraphCanvas(
@@ -92,20 +93,20 @@ fun GraphDrawingScreen(
                     onClick = { viewModel.changeDrawMode(DrawMode.VERTEX) },
                     enabled = drawMode != DrawMode.VERTEX
                 ) {
-                    Text("Add vertex")
+                    Text(stringResource(Res.string.add_vertex_button))
                 }
                 Button(
                     onClick = { viewModel.changeDrawMode(DrawMode.EDGE) },
                     enabled = drawMode != DrawMode.EDGE
                 ) {
-                    Text("Add edge")
+                    Text(stringResource(Res.string.add_edge_button))
                 }
                 Button(
                     onClick = {
                         viewModel.saveGraph()
                     }
                 ) {
-                    Text("Save")
+                    Text(stringResource(Res.string.save_button))
                 }
             }
         }

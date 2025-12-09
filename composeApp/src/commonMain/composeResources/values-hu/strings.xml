@@ -7,4 +7,8 @@
     <string name="back_button">Vissza</string>
     <string name="done_button">Kész</string>
     <string name="restart_button">Újraindítás</string>
+    <string name="add_vertex_button">Csúcs hozzáadása</string>
+    <string name="add_edge_button">Él hozzáadása</string>
+    <string name="save_button">Mentés</string>
+    <string name="custom_graph_default_name">Saját gráf</string>
 </resources>

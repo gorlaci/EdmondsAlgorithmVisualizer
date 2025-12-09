@@ -7,4 +7,8 @@
     <string name="back_button">Back</string>
     <string name="done_button">Done</string>
     <string name="restart_button">Restart</string>
+    <string name="add_vertex_button">Add vertex</string>
+    <string name="add_edge_button">Add edge</string>
+    <string name="save_button">Save</string>
+    <string name="custom_graph_default_name">Custom Graph</string>
 </resources>
