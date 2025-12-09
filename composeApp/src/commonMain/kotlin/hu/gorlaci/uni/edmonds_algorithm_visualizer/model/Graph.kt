@@ -12,8 +12,8 @@ import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.GraphicalVertex
 import hu.gorlaci.uni.edmonds_algorithm_visualizer.ui.model.HighlightType
 
 class Graph(
-    val vertices: MutableList<Vertex> = mutableListOf(),
-    val edges: MutableList<Edge> = mutableListOf(),
+    val vertices: MutableSet<Vertex> = mutableSetOf(),
+    val edges: MutableSet<Edge> = mutableSetOf(),
     val idCoordinatesMap: MutableMap<Char, Pair<Double, Double>> = mutableMapOf(),
     var name: String = "",
     private var activeEdge: Edge? = null,
@@ -27,7 +27,7 @@ class Graph(
             val newVertex = vertex.copy()
             vertexMap[vertex] = newVertex
             newVertex
-        }.toMutableList()
+        }.toMutableSet()
 
         vertices.forEach { vertex ->
             val newVertex = vertexMap[vertex]!!
@@ -53,7 +53,7 @@ class Graph(
                 newBlossomEdges.add(newEdge)
             }
             newEdge
-        }.toMutableList()
+        }.toMutableSet()
         return Graph(
             vertices = newVertices,
             edges = newEdges,
@@ -83,26 +83,26 @@ class Graph(
     private var edgesLeft = true
 
 
-    fun runEdmondsAlgorithm() {
+    fun runEdmondsAlgorithm() { // O(m^3*n^2)
         saveStep()
         saveStep(StepType.Nothing("Kiindulunk az üres párosításból"))
-        while (edgesLeft) {
-            buildForest()
+        while (edgesLeft) { //O(m^3*n^2)
+            buildForest() //O(m^2*n^2)
             saveStep()
         }
-        reset()
+        reset() // O(m+n)
         saveStep(StepType.Nothing("Bontsuk ki a kelyheket!"))
         val verticesCopy = vertices.toList()
-        verticesCopy.forEach { vertex ->
+        verticesCopy.forEach { vertex -> // O(m*n)
             if (vertex is BlossomVertex) {
                 deconstructBlossom(vertex)
             }
         }
-        reset()
+        reset() // O(m+n)
         saveStep(StepType.Nothing("A megtalált párosításunk maximális"))
     }
 
-    private fun reset() {
+    private fun reset() { // O(n+m)
         for (vertex in vertices) {
             vertex.type = VertexType.NONE
             vertex.parent = null
@@ -112,15 +112,15 @@ class Graph(
         }
     }
 
-    private fun buildForest() {
-        reset()
-        for (vertex in vertices) {
+    private fun buildForest() { // O(m^2*n^2)
+        reset() // O(m+n)
+        for (vertex in vertices) { // O(n)
             vertex.type = if (vertex.pair == null) VertexType.ROOT else VertexType.CLEARING
         }
         saveStep(StepType.Nothing("Megépítjük a 0 élű alternáló erdőt"))
 
-        var edge = edges.find { !it.visited }
-        while (edge != null) {
+        var edge = edges.find { !it.visited } // O(m)
+        while (edge != null) { // O(m^2*n^2)
             edge.visited = true
             activeEdge = edge
             saveStep(
@@ -130,10 +130,11 @@ class Graph(
                     edge.getType()
                 )
             )
-            if (edge.fromVertex.type.isOuter() && edge.toVertex.type.isOuter()) {
+            if (edge.fromVertex.type.isOuter() && edge.toVertex.type.isOuter()) { // O(m*n^2)
                 saveStep(StepType.Nothing("Külső-külső"))
-                val commonRoot = findCommonRoot(edge.fromVertex, edge.toVertex)
-                if (commonRoot != null) {
+                val commonRoot = findCommonRoot(edge.fromVertex, edge.toVertex) // O(n^2)
+                // O(m*n^2)
+                if (commonRoot != null) { // O(m+n)
                     markBlossomEdges(edge.fromVertex, edge.toVertex, commonRoot)
                     saveStep(
                         StepType.MarkBlossom(
@@ -149,11 +150,11 @@ class Graph(
                         )
                     )
                     blossomEdges.clear()
-                    makeBlossom(edge.fromVertex, edge.toVertex, commonRoot)
-                    edge = edges.find { !it.visited }
+                    makeBlossom(edge.fromVertex, edge.toVertex, commonRoot) // O(m+n)
+                    edge = edges.find { !it.visited } //O(m)
                     activeEdge = null
                     continue
-                } else {
+                } else { // O( m*n^2)
                     markAugmentingPathEdges(edge.fromVertex, edge.toVertex)
                     saveStep(
                         StepType.MarkAugmentingPath(
@@ -163,104 +164,103 @@ class Graph(
                         )
                     )
                     augmentingPathEdges.clear()
-                    augmentAlongAlternatingPath(edge.fromVertex, edge.toVertex)
-                    reset()
+                    augmentAlongAlternatingPath(edge.fromVertex, edge.toVertex) //O(m*n^2)
+                    reset() // O(m+n)
                     saveStep(StepType.Nothing("Bővítettük a párosítást"))
                     activeEdge = null
                     return
                 }
             }
-            if (edge.fromVertex.type.isOuter() && edge.toVertex.type == VertexType.CLEARING) {
-                extendForest(edge.fromVertex, edge.toVertex)
-                edge = edges.find { !it.visited }
+            if (edge.fromVertex.type.isOuter() && edge.toVertex.type == VertexType.CLEARING) { // O(m)
+                extendForest(edge.fromVertex, edge.toVertex) // O(1)
+                edge = edges.find { !it.visited } // O(m)
                 activeEdge = null
                 continue
             }
-            if (edge.fromVertex.type == VertexType.CLEARING && edge.toVertex.type.isOuter()) {
-                extendForest(edge.toVertex, edge.fromVertex)
-                edge = edges.find { !it.visited }
+            if (edge.fromVertex.type == VertexType.CLEARING && edge.toVertex.type.isOuter()) { // O(m)
+                extendForest(edge.toVertex, edge.fromVertex) // O(1)
+                edge = edges.find { !it.visited } // O(m)
                 activeEdge = null
                 continue
             }
-            edge = edges.find { !it.visited }
+            edge = edges.find { !it.visited } // O(m)
             activeEdge = null
         }
         edgesLeft = false
     }
 
-    private fun augmentAlongAlternatingPath(vertexA: Vertex, vertexB: Vertex) {
-        augmentAlongBranch(vertexA)
-        augmentAlongBranch(vertexB)
+    private fun augmentAlongAlternatingPath(vertexA: Vertex, vertexB: Vertex) { // O(m*n)
+        augmentAlongBranch(vertexA) //O(m*n)
+        augmentAlongBranch(vertexB) //O(m*n)
 
-        makePair(vertexA, vertexB)
+        makePair(vertexA, vertexB) // O(m*n)
     }
 
-    private fun augmentAlongBranch(vertex: Vertex) {
+    private fun augmentAlongBranch(vertex: Vertex) { // O(m*n)
         var currentVertex = vertex.parent
         while (currentVertex != null && currentVertex.parent != null) {
             val parent = currentVertex.parent!!
             val grandParent = parent.parent
 
-            makePair(currentVertex, parent)
+            makePair(currentVertex, parent) // O(m*n)
 
             currentVertex = grandParent
         }
     }
 
-    private fun makePair(vertexA: Vertex, vertexB: Vertex) {
+    private fun makePair(vertexA: Vertex, vertexB: Vertex) { // O(m*n)
         vertexA.pair = vertexB
         vertexB.pair = vertexA
         if (vertexA is BlossomVertex) {
-            deconstructBlossom(vertexA)
+            deconstructBlossom(vertexA) // O(m*n)
         }
         if (vertexB is BlossomVertex) {
-            deconstructBlossom(vertexB)
+            deconstructBlossom(vertexB) // O(m*n)
         }
     }
 
-    private fun makeBlossom(vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex) {
+    private fun makeBlossom(vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex) { // O(m+n)
 
-        val blossomVertices = getBlossomVertices(vertexA, vertexB, commonRoot)
+        val blossomVertices = getBlossomVertices(vertexA, vertexB, commonRoot) // O(n)
+        val blossomVerticesSet = blossomVertices.toSet() //O(n)
 
-        val blossomId = blossomVertices.map { it.id }.sorted().joinToString("")
-        val blossomEdges = edges.filter { it.fromVertex in blossomVertices || it.toVertex in blossomVertices }
+        val blossomId = blossomVertices.map { it.id }.sorted().joinToString("") // O(n)
+        val blossomEdges =
+            edges.filter { it.fromVertex in blossomVerticesSet || it.toVertex in blossomVerticesSet }.toSet() // O(m)
 
         val blossomVertex = BlossomVertex(
             id = blossomId,
             type = commonRoot.type,
             pair = commonRoot.pair,
             parent = commonRoot.parent,
-            previousStructure = Graph(
-                vertices = blossomVertices,
-                edges = blossomEdges.toMutableList(),
-                idCoordinatesMap = idCoordinatesMap
-            )
+            previousStructureVertices = blossomVertices,
+            previousStructureEdges = blossomEdges,
         )
 
         val edgesCopy = edges.toList()
 
-        for (edge in edgesCopy) {
-            if (edge.fromVertex in blossomVertices && edge.toVertex !in blossomVertices) {
+        for (edge in edgesCopy) { // O(m)
+            if (edge.fromVertex in blossomVerticesSet && edge.toVertex !in blossomVerticesSet) { // O(1)
                 edges.add(Edge(blossomVertex, edge.toVertex))
             }
-            if (edge.fromVertex !in blossomVertices && edge.toVertex in blossomVertices) {
+            if (edge.fromVertex !in blossomVerticesSet && edge.toVertex in blossomVerticesSet) { // O(1)
                 edges.add(Edge(edge.fromVertex, blossomVertex))
             }
         }
-        edges.removeAll(blossomEdges)
+        edges.removeAll(blossomEdges) // O(m)
 
-        vertices.removeAll(blossomVertices)
-        vertices.add(blossomVertex)
+        vertices.removeAll(blossomVerticesSet) // O(n)
+        vertices.add(blossomVertex) // O(1)
 
         commonRoot.pair?.pair = blossomVertex
-        for (vertex in vertices) {
-            if (vertex.parent in blossomVertices) {
+        for (vertex in vertices) { // O(n)
+            if (vertex.parent in blossomVerticesSet) {
                 vertex.parent = blossomVertex
             }
         }
     }
 
-    private fun getBlossomVertices(vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex): MutableList<Vertex> {
+    private fun getBlossomVertices(vertexA: Vertex, vertexB: Vertex, commonRoot: Vertex): MutableList<Vertex> { // O(n)
         val blossomVertices = mutableListOf(commonRoot)
         var currentVertex: Vertex = vertexA
         val sideAVertices = mutableListOf<Vertex>()
@@ -280,49 +280,48 @@ class Graph(
         return blossomVertices
     }
 
-    private fun deconstructBlossom(blossomVertex: BlossomVertex) {
-
+    private fun deconstructBlossom(blossomVertex: BlossomVertex) { // O(m*n' + m'*n) = O(m*n)
         saveStep(StepType.DeconstructBlossom("Bontsuk ki a ${blossomVertex.id} kelyhet!", blossomVertex))
 
-        val blossomVertices = blossomVertex.previousStructure.vertices
+        val blossomVertices = blossomVertex.previousStructureVertices
 
-        vertices.remove(blossomVertex)
-        vertices.addAll(blossomVertices)
+        vertices.remove(blossomVertex) // O(1)
+        vertices.addAll(blossomVertices) // O(n')
         edges.removeAll { it.fromVertex == blossomVertex || it.toVertex == blossomVertex }
-        for (edge in blossomVertex.previousStructure.edges) {
+        for (edge in blossomVertex.previousStructureEdges) { // O(m'*n)
             val fromVertex = if (edge.fromVertex in vertices) {
                 edge.fromVertex
             } else {
-                vertices.find { it.id.contains(edge.fromVertex.id) }!!
+                vertices.find { it.id.contains(edge.fromVertex.id) }!! // O(n)
             }
             val toVertex = if (edge.toVertex in vertices) {
                 edge.toVertex
             } else {
-                vertices.find { it.id.contains(edge.toVertex.id) }!!
+                vertices.find { it.id.contains(edge.toVertex.id) }!! // O(n)
             }
-            edges.add(Edge(fromVertex, toVertex))
+            edges.add(Edge(fromVertex, toVertex)) // O(1)
         }
 
-        if (blossomVertex.pair != null) {
-            val unpairedVertex = blossomVertices.find { it.pair !in blossomVertices }!!
-            val edge = edges.find {
+        if (blossomVertex.pair != null) { // O(m*n')
+            val unpairedVertex = blossomVertices.find { it.pair !in blossomVertices }!! //O(n')
+            val edge = edges.find {// O(m)
                 it.fromVertex == unpairedVertex && it.toVertex == blossomVertex.pair
                         || it.fromVertex == blossomVertex.pair && it.toVertex == unpairedVertex.pair
             }
             if (edge != null) {
                 edge.fromVertex.pair = edge.toVertex
                 edge.toVertex.pair = edge.fromVertex
-            } else {
-                val incomingEdge = edges.first {
+            } else { // O(m*n')
+                val incomingEdge = edges.first {// O(m*n')
                     it.fromVertex == blossomVertex.pair && it.toVertex in blossomVertices ||
                             it.toVertex == blossomVertex.pair && it.fromVertex in blossomVertices
                 }
                 incomingEdge.fromVertex.pair = incomingEdge.toVertex
                 incomingEdge.toVertex.pair = incomingEdge.fromVertex
                 val pairedVertex =
-                    if (incomingEdge.fromVertex in blossomVertices) incomingEdge.fromVertex else incomingEdge.toVertex
+                    if (incomingEdge.fromVertex in blossomVertices) incomingEdge.fromVertex else incomingEdge.toVertex //O(n')
                 val indexOfPairedVertex = blossomVertices.indexOf(pairedVertex) + 1
-                for (i in 0..<blossomVertices.size / 2) {
+                for (i in 0..<blossomVertices.size / 2) { // O(n')
                     val vertexA = blossomVertices[(indexOfPairedVertex + i * 2) % blossomVertices.size]
                     val vertexB = blossomVertices[(indexOfPairedVertex + i * 2 + 1) % blossomVertices.size]
                     vertexA.pair = vertexB
@@ -331,7 +330,7 @@ class Graph(
             }
         }
 
-        reset()
+        reset() // O(n+m)
 
         saveStep(
             StepType.BlossomOutAnimation(
@@ -340,7 +339,7 @@ class Graph(
             )
         )
 
-        for (vertex in blossomVertex.previousStructure.vertices) {
+        for (vertex in blossomVertex.previousStructureVertices) {
             if (vertex is BlossomVertex) {
                 deconstructBlossom(vertex)
             }
@@ -348,7 +347,7 @@ class Graph(
 
     }
 
-    private fun findCommonRoot(vertexA: Vertex, vertexB: Vertex): Vertex? {
+    private fun findCommonRoot(vertexA: Vertex, vertexB: Vertex): Vertex? { // O(n^2)
         val pathA = mutableSetOf<Vertex>()
         var currentVertex: Vertex? = vertexA
         while (currentVertex != null) {
@@ -365,7 +364,7 @@ class Graph(
         return null
     }
 
-    private fun extendForest(outerVertex: Vertex, clearingVertex: Vertex) {
+    private fun extendForest(outerVertex: Vertex, clearingVertex: Vertex) { // O(1)
         saveStep(StepType.Nothing("Külső-tisztás\nBővítsük az erdőt!"))
 
         clearingVertex.type = VertexType.INNER

@@ -26,7 +26,7 @@ class InMemoryGraphStorage() : GraphStorage {
 
     private fun addExampleGraph1() {
         val graph = Graph(
-            vertices = mutableListOf(
+            vertices = mutableSetOf(
                 Vertex(id = "A"),
                 Vertex(id = "B"),
                 Vertex(id = "C"),
@@ -71,7 +71,7 @@ class InMemoryGraphStorage() : GraphStorage {
 
     private fun addExampleGraph2() {
         val graph = Graph(
-            vertices = mutableListOf(
+            vertices = mutableSetOf(
                 Vertex(id = "A"),
                 Vertex(id = "B"),
                 Vertex(id = "C"),
