@@ -87,6 +87,7 @@ class GraphDrawingScreenViewmodel(
                 name = "Custom Graph"
             )
             graphicalGraph.value = graph.toGraphicalGraph()
+            graphName.value = "Custom Graph"
             nextID = 'A'
         }
     }

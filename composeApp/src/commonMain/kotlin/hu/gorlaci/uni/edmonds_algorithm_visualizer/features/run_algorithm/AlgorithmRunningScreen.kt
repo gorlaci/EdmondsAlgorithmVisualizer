@@ -33,7 +33,7 @@ fun AlgorithmRunningScreen(
 
     val nextEnabled by viewModel.nextEnabled
     val backEnabled by viewModel.backEnabled
-
+    val runEnabled by viewModel.runEnabled
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -99,6 +99,7 @@ fun AlgorithmRunningScreen(
                     }
                     Button(
                         onClick = { viewModel.onRun() },
+                        enabled = runEnabled,
                     ) {
                         Text(stringResource(Res.string.run_button))
                     }

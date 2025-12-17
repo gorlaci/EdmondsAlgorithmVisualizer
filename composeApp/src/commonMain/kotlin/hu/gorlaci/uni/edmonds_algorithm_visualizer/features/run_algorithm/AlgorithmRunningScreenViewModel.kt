@@ -29,6 +29,7 @@ open class AlgorithmRunningScreenViewModel(
 
     val nextEnabled = mutableStateOf(false)
     val backEnabled = mutableStateOf(false)
+    val runEnabled = mutableStateOf(true)
 
     open fun onNext() {
         if (step < steps.size - 1) {
@@ -121,6 +122,7 @@ open class AlgorithmRunningScreenViewModel(
         steps.addAll(graph.steps)
         step = 0
         setButtons()
+        runEnabled.value = false
     }
 
 
