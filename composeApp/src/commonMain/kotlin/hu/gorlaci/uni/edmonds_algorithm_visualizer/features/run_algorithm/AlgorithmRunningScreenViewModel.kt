@@ -115,7 +115,7 @@ open class AlgorithmRunningScreenViewModel(
 
     open fun onRun() {
 
-        val graph = currentGraph.value
+        val graph = graphList[selectedGraphIndex]
 
         steps.clear()
         graph.runEdmondsAlgorithm()
